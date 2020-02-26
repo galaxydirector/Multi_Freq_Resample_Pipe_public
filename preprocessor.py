@@ -42,6 +42,21 @@ class Preprocessor(object):
         # return month, weekday, time, price, trade_size
         # print(price)
 
+    def sliding_window(self, original_list, win_length, slide_step=1):
+        """ Generic sliding window generator
+        Current version does not perform any check, and
+        assumes slide step is 1
+        
+        original_list: float[][]
+        win_length: int
+        output: float[][]
+        """
+        for i in range(0, len(original_list)-win_length+1):
+            window = original_list[i: i+win_length]
+
+            if len(window) > 0:
+                yield window
+
     def batch_transform(self, df_window, receptive_field, include_otc=False):
         """
         args:

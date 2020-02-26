@@ -71,7 +71,7 @@ class StockDataReader():
             if data_list is not None: # need to check if it is under 6 days
                 # convert from seconds to minutes
                 resampled_data_list = [self.preprocessor.to_minute_data(data) for data in data_list]
-                data_window = self.db_manager.sliding_window(resampled_data_list, self.data_win_len)
+                data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
                 if data_window is not None:
                     processed_data_window = self.preprocessor.batch_transform(data_window, self.receptive_field)
@@ -115,7 +115,7 @@ class StockDataReader():
             # if data_list is not None: # need to check if it is under 6 days
             # convert from seconds to minutes
             resampled_data_list = [self.preprocessor.to_minute_data(data) for data in new_data_list]
-            data_window = self.db_manager.sliding_window(resampled_data_list, self.data_win_len)
+            data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
                 processed_data_window = self.preprocessor.batch_transform(data_window, self.receptive_field)
