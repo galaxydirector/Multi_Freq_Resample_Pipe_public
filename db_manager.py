@@ -59,20 +59,6 @@ class DBManager(object):
         archive.close()
 
 
-    def sliding_window(self, original_list, win_length, slide_step=1):
-        """ Generic sliding window generator
-        Current version does not perform any check, and
-        assumes slide step is 1
-
-        """
-        for i in range(0, len(original_list)-win_length+1):
-            window = original_list[i: i+win_length]
-
-            if len(window) > 0:
-                yield window
-                
-
-
     def unzip_data(self, archive, data_name):
         with archive.open(data_name) as data:
             try:
@@ -108,6 +94,25 @@ class DBManager(object):
         # print("unzipping {} {} file completed".format(symbol, year))
 
         return data_list
+
+
+
+
+
+    def sliding_window(self, original_list, win_length, slide_step=1):
+        """ Generic sliding window generator
+        Current version does not perform any check, and
+        assumes slide step is 1
+        
+        original_list: float[][]
+        win_length: int
+        output: float[][]
+        """
+        for i in range(0, len(original_list)-win_length+1):
+            window = original_list[i: i+win_length]
+
+            if len(window) > 0:
+                yield window
 
 
 

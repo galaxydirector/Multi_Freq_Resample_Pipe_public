@@ -43,6 +43,13 @@ class Preprocessor(object):
         # print(price)
 
     def batch_transform(self, df_window, receptive_field, include_otc=False):
+        """
+        args:
+        df_window: float[][]
+        receptive_field: int
+
+        output: float[][]
+        """
         data_batch = []
 
         for df_list in df_window:

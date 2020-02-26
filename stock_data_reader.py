@@ -113,7 +113,7 @@ class StockDataReader():
                 break
 
             # if data_list is not None: # need to check if it is under 6 days
-                # convert from seconds to minutes
+            # convert from seconds to minutes
             resampled_data_list = [self.preprocessor.to_minute_data(data) for data in new_data_list]
             data_window = self.db_manager.sliding_window(resampled_data_list, self.data_win_len)
 
