@@ -70,7 +70,7 @@ class StockDataReader():
 
             if data_list is not None: # need to check if it is under 6 days
                 # convert from seconds to minutes
-                resampled_data_list = [self.preprocessor.to_minute_data(data) for data in data_list]
+                resampled_data_list = [self.preprocessor.to_minute_data(data).get("price") for data in data_list]
                 data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
                 if data_window is not None:
@@ -114,17 +114,22 @@ class StockDataReader():
 
             # if data_list is not None: # need to check if it is under 6 days
             # convert from seconds to minutes
-            resampled_data_list = [self.preprocessor.to_minute_data(data) for data in new_data_list]
+            resampled_data_list = [self.preprocessor.to_minute_data(data).get("price") for data in new_data_list]
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
-                processed_data_window = self.preprocessor.batch_transform(data_window, self.receptive_field)
+                # processed_data_window = self.preprocessor.batch_transform(data_window, self.receptive_field)
                 
-                full_stock_data_list =[]
-                for stock_data_list in processed_data_window:
-                    full_stock_data_list = np.append(full_stock_data_list, stock_data_list.reshape(-1, 1)[-390:])
+                # full_stock_data_list =[]
+                # for stock_data_list in processed_data_window:
+                #     full_stock_data_list = np.append(full_stock_data_list, stock_data_list.reshape(-1, 1)[-390:])
                 
-                sess.run(self.trans, feed_dict={self.trans_placeholder: full_stock_data_list.reshape(-1,1)})
+                processed_data_window = self.preprocessor.batch_log_transform(data_window)
+
+                # making sure the input into the queue has only one dimension
+                assert len(np.array(processed_data_window).shape)==1
+
+                sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window})
 
 
     def start_threads(self, sess, n_threads=2):
