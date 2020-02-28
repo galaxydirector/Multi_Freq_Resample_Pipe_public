@@ -26,21 +26,9 @@ class Preprocessor(object):
         stock_price = stock_data_df['PRICE'].resample('1T').mean().fillna(method='ffill')
         trade_size = stock_data_df['SIZE'].resample('1T').sum().fillna(method='ffill')
         date = stock_data_df.index
-        price = stock_price
+        # price = stock_price
 
-        return price
-
-
-        # if len(stock_price) < 390:
-        #     stock_price = pd.concat([stock_price, pd.Series([stock_price.iloc[-1]]*(390-len(stock_price)))])
-
-        # month = np.array([d.date().month for d in stock_data_df.index])
-        # weekday = np.array([d.date().weekday() for d in stock_data_df.index])
-        # time = np.array([[d.time().hour, d.time().minute, d.time().second] for d in stock_data_df.index]).T
-        # trade_size = stock_data_df['size'].values
-
-        # return month, weekday, time, price, trade_size
-        # print(price)
+        return {"price":stock_price, "vol":trade_size, "date":date}
 
     def sliding_window(self, original_list, win_length, slide_step=1):
         """ Generic sliding window generator
@@ -57,42 +45,39 @@ class Preprocessor(object):
             if len(window) > 0:
                 yield window
 
-    def batch_transform(self, df_window, receptive_field, include_otc=False):
+
+
+    def log_return(self, a, b):
         """
+        a,b: float
+        output: log(a/b)
+        """
+        return np.log(a)-np.log(b)
+
+    def batch_log_transform(self, data_window):
+        """
+        This transformation uses log return for each minute 
+        comparing to previous day close price
+        
         args:
-        df_window: float[][]
-        receptive_field: int
+        data_window: float[][df]
 
-        output: float[][]
+        output: 
+        float[] a long series of the whole year transformation
         """
-        data_batch = []
+        output = []
 
-        for df_list in df_window:
+        # convert pd into np
+        for i in range(len(data_window)):
             try:
-                merged = pd.concat(df_list).values.reshape(-1, 1)
-                transformed_data = self.transform_weekly_data(merged, receptive_field)
-                data_batch.append(transformed_data)
-
+                merged_np = pd.concat(data_window[i]).values.reshape(-1, 1)
+                data_window[i] = merged_np
             except TypeError as e:
-                # print(df_list)
                 raise e
 
-        return data_batch
+        for prev_day, one_day in zip(data_window, data_window[1:]):
+            prev_close = prev_day[-1]
 
+            output.extend([self.log_return(now, prev_close) for now in one_day])
 
-    def transform_weekly_data(self, data_set, receptive_field):
-        """
-        Sigmoid transformation transforms data into sigmoid space. Assume inputs are
-        column vectors.
-        
-        Argument: 
-        data_set is a (6) days min level data in a column vector
-        receptive_field is how many mins would be dependent on
-        """
-        piece = data_set
-
-        # main part removed 
-
-        # return size would be (6.5*60*6, 1)
-        # return np.array(normalized)
-        return
+        return output
