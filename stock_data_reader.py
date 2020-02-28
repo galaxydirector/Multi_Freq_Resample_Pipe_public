@@ -118,12 +118,6 @@ class StockDataReader():
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
-                # processed_data_window = self.preprocessor.batch_transform(data_window, self.receptive_field)
-                
-                # full_stock_data_list =[]
-                # for stock_data_list in processed_data_window:
-                #     full_stock_data_list = np.append(full_stock_data_list, stock_data_list.reshape(-1, 1)[-390:])
-                
                 processed_data_window = self.preprocessor.batch_log_transform(data_window)
 
                 # making sure the input into the queue has only one dimension
