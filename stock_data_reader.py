@@ -51,11 +51,11 @@ class StockDataReader():
         self.receptive_field = receptive_field
 
         # queue setup
-        self.trans_placeholder = tf.compat.v1.placeholder(dtype=tf.float32, shape=None)
+        # self.trans_placeholder = tf.compat.v1.placeholder(dtype=tf.float32, shape=None)
         self.trans_queue = tf.queue.PaddingFIFOQueue(queue_size,
                                          ['float32'],
                                          shapes=[(None, 1)]) ### TODO: shape needs to be a variable
-        self.trans = self.trans_queue.enqueue([self.trans_placeholder])
+        # self.trans = self.trans_queue.enqueue([self.trans_placeholder])
         # for multithreading:
         self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
         
@@ -117,12 +117,14 @@ class StockDataReader():
             # if data_list is not None: # need to check if it is under 6 days
             # convert from seconds to minutes
             # TODO: extend variable to multiple, price/volume
-            resampled_data_list = [self.preprocessor.to_minute_data(data).get("price") for data in new_data_list]
+            resampled_data_list = [[self.preprocessor.to_minute_data(data).get(feature) \
+                                    for feature in self.config["data"]["features"]] \
+                                    for data in new_data_list]
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
                 # this window is the whole year data
-                processed_data_window = self.preprocessor.batch_log_transform(data_window)
+                processed_data_window = self.preprocessor.batch_log_transform(data_window, self.configs)
 
                 # making sure the input into the queue has only one dimension
                 # TODO: extend dimension to multiple
@@ -136,7 +138,8 @@ class StockDataReader():
 
                 # feed in the exact length to queue
                 for i in range(len(processed_data_window)-total_len+1):
-                    sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
+                    self.trans_queue.enqueue(processed_data_window[i:i+total_len])
+                    # sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
     def start_threads(self, sess, n_threads=2):

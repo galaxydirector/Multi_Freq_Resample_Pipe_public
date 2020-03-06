@@ -28,16 +28,16 @@ class Preprocessor(object):
         date = stock_data_df.index
         # price = stock_price
 
-        return {"price":stock_price, "vol":trade_size, "date":date}
+        return {"price":stock_price, "volume":trade_size, "date": date}
 
     def sliding_window(self, original_list, win_length, slide_step=1):
         """ Generic sliding window generator
         Current version does not perform any check, and
         assumes slide step is 1
         
-        original_list: float[][]
+        original_list: float[][][]
         win_length: int
-        output: float[][]
+        output: float[daily][feature][df]
         """
         for i in range(0, len(original_list)-win_length+1):
             window = original_list[i: i+win_length]
@@ -54,30 +54,46 @@ class Preprocessor(object):
         """
         return np.log(a)-np.log(b)
 
-    def batch_log_transform(self, data_window):
+    def batch_log_transform(self, data_window, config):
         """
         This transformation uses log return for each minute 
         comparing to previous day close price
+
+        Caution: This operation requires close price at column 0 in df!!!
         
         args:
         data_window: float[][df]
+        df has dimension of (time_series_steps, num_features)
 
         output: 
         float[] a long series of the whole year transformation
         """
-        output = []
+        
 
         # convert pd into np
         for i in range(len(data_window)):
             try:
-                merged_np = pd.concat(data_window[i]).values.reshape(-1, 1)
+                # TODO: extend dimension into an input: checked!
+                merged_np = pd.concat(data_window[i]).values.reshape(-1, len(configs["data"]["features"]))
                 data_window[i] = merged_np
             except TypeError as e:
                 raise e
 
-        for prev_day, one_day in zip(data_window, data_window[1:]):
-            prev_close = prev_day[-1]
 
-            output.extend([self.log_return(now, prev_close) for now in one_day])
+        output = []
+        for prev_day, one_day in zip(data_window, data_window[1:]):
+            prev_close = prev_day[-1][0]
+
+            for row in one_day:
+                temp = []
+                # row[0] is a hyper param, which price needs to be the first feature
+                temp.append(self.log_return(row[0],prev_close)) 
+                # deep copy rest of features into matrix
+                for i in range(1,len(row)):
+                    temp.append(row[i])
+
+                # put every minute into the output
+                output.append(temp)
+            # output.extend([self.log_return(now, prev_close) for now in one_day])
 
         return output
