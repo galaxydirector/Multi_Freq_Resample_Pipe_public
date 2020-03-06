@@ -25,7 +25,8 @@ symbol_list = ['FB','JPM','XOM']
 
 
 class StockDataReader():
-    def __init__(self,data_dir,
+    def __init__(self, configs,
+                data_dir,
                 coord,
                 symbol_list,
                 year_range,
@@ -36,6 +37,7 @@ class StockDataReader():
         # system initialize
         self.db_manager = DBManager(data_dir)
         self.preprocessor = Preprocessor()
+        self.configs = configs
 
         self.coord = coord
         self.threads = []
@@ -49,10 +51,10 @@ class StockDataReader():
         self.receptive_field = receptive_field
 
         # queue setup
-        self.trans_placeholder = tf.placeholder(dtype=tf.float32, shape=None)
-        self.trans_queue = tf.PaddingFIFOQueue(queue_size,
+        self.trans_placeholder = tf.compat.v1.placeholder(dtype=tf.float32, shape=None)
+        self.trans_queue = tf.queue.PaddingFIFOQueue(queue_size,
                                          ['float32'],
-                                         shapes=[(None, 1)])
+                                         shapes=[(None, 1)]) ### TODO: shape needs to be a variable
         self.trans = self.trans_queue.enqueue([self.trans_placeholder])
         # for multithreading:
         self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
@@ -78,7 +80,7 @@ class StockDataReader():
                     for stock_data_list in processed_data_window:
                         full_stock_data_list = np.append(full_stock_data_list, stock_data_list.reshape(-1, 1)[-390:])
             else:
-            	print("{} {} does not have data".format(iter_order_a, iter_order_b))
+                print("{} {} does not have data".format(iter_order_a, iter_order_b))
 
         return full_stock_data_list
 
@@ -114,16 +116,27 @@ class StockDataReader():
 
             # if data_list is not None: # need to check if it is under 6 days
             # convert from seconds to minutes
+            # TODO: extend variable to multiple, price/volume
             resampled_data_list = [self.preprocessor.to_minute_data(data).get("price") for data in new_data_list]
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
+                # this window is the whole year data
                 processed_data_window = self.preprocessor.batch_log_transform(data_window)
 
                 # making sure the input into the queue has only one dimension
+                # TODO: extend dimension to multiple
                 assert len(np.array(processed_data_window).shape)==1
 
-                sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window})
+                # determine the length
+                forecast_steps = self.configs["training"]["forcast_steps"]
+                input_steps = self.configs["model"]["layers"]["input_timesteps"]
+                total_len = input_steps+forecast_steps
+                assert len(data_series)>=total_len
+
+                # feed in the exact length to queue
+                for i in range(len(processed_data_window)-total_len+1):
+                    sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
     def start_threads(self, sess, n_threads=2):
@@ -162,10 +175,10 @@ def queue_thread_main():
     # operation
     trans_dequeue  = reader.dequeue_trans(1)
 
-    session_config = tf.ConfigProto(inter_op_parallelism_threads = 0,
+    session_config = tf.compat.v1.ConfigProto(inter_op_parallelism_threads = 0,
                                     intra_op_parallelism_threads = 0)
-    with tf.Session(config=session_config) as sess:
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+    with tf.compat.v1.Session(config=session_config) as sess:
+        threads = tf.compat.v1.train.start_queue_runners(sess=sess, coord=coord)
         reader.start_threads(sess)
 
         for _ in range(8): #19*6-2
@@ -181,6 +194,6 @@ def queue_thread_main():
 
 
 if __name__ == '__main__':
-	start = time.time()
-	queue_thread_main()
-	print("done: %s" % (time.time() - start))
+    start = time.time()
+    queue_thread_main()
+    print("done: %s" % (time.time() - start))
