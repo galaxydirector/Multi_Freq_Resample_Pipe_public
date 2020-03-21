@@ -37,7 +37,7 @@ class Preprocessor(object):
         
         original_list: float[][][]
         win_length: int
-        output: float[daily][feature][df]
+        output: float[daily][feature][df], e.g. float[day 1][price df, volume df]
         """
         for i in range(0, len(original_list)-win_length+1):
             window = original_list[i: i+win_length]
@@ -62,7 +62,10 @@ class Preprocessor(object):
         Caution: This operation requires close price at column 0 in df!!!
         
         args:
-        data_window: float[][df]
+        data_window: float[][df] or 
+                     float[daily][feature][df] or 
+                     float[day 1][price df, volume df] 
+                     interchangeable
         df has dimension of (time_series_steps, num_features)
 
         output: 
@@ -74,7 +77,8 @@ class Preprocessor(object):
         for i in range(len(data_window)):
             try:
                 # TODO: extend dimension into an input: checked!
-                merged_np = pd.concat(data_window[i]).values.reshape(-1, len(configs["data"]["features"]))
+                # concat features to column, TODO: it is possible to put this df transform into to_minute_data()
+                merged_np = pd.concat(data_window[i],axis=1).values.reshape(-1, len(configs["data"]["features"]))
                 data_window[i] = merged_np
             except TypeError as e:
                 raise e

@@ -116,10 +116,12 @@ class StockDataReader():
 
             # if data_list is not None: # need to check if it is under 6 days
             # convert from seconds to minutes
-            # TODO: extend variable to multiple, price/volume
+            # TODO: extend variable to multiple, price/volume: completed
+            # resampled_data_list[daily][feature][data]
             resampled_data_list = [[self.preprocessor.to_minute_data(data).get(feature) \
                                     for feature in self.config["data"]["features"]] \
                                     for data in new_data_list]
+            # data_win_len is how many days to look at in one window
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
@@ -127,8 +129,8 @@ class StockDataReader():
                 processed_data_window = self.preprocessor.batch_log_transform(data_window, self.configs)
 
                 # making sure the input into the queue has only one dimension
-                # TODO: extend dimension to multiple
-                assert len(np.array(processed_data_window).shape)==1
+                # TODO: extend dimension to multiple: completed!
+                assert np.array(processed_data_window).shape[1]==len(configs["data"]["features"])
 
                 # determine the length
                 forecast_steps = self.configs["training"]["forcast_steps"]
@@ -138,7 +140,7 @@ class StockDataReader():
 
                 # feed in the exact length to queue
                 for i in range(len(processed_data_window)-total_len+1):
-                    self.trans_queue.enqueue(processed_data_window[i:i+total_len])
+                    self.trans_queue.enqueue((processed_data_window[i:i+total_len],))
                     # sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
