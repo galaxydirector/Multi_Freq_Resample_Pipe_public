@@ -32,7 +32,7 @@ class StockDataReader():
                 year_range,
                 symbol_first,
                 data_win_len,
-                receptive_field,
+                receptive_field=None,
                 queue_size=500):
         # system initialize
         self.db_manager = DBManager(data_dir)
