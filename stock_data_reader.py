@@ -9,8 +9,8 @@ from glob import glob
 from tqdm import tqdm
 import itertools
 import numpy as np
-import multiprocessing as mp
-from multiprocessing import Pool, cpu_count
+# import multiprocessing as mp
+# from multiprocessing import Pool, cpu_count
 import threading
 import time
 
@@ -59,6 +59,7 @@ class StockDataReader():
         # for multithreading:
         self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
         
+        
     def main_thread(self, sess):
         full_stock_data_list =[]
         full_sig_data_list = []
@@ -88,11 +89,19 @@ class StockDataReader():
     def dequeue_trans(self, num_elements):
         return self.trans_queue.dequeue_many(num_elements)
 
-    def main_thread_queue(self, sess):
+    def main_thread_queue(self):
         stop = False
 
+        """Epochs
+        In order to repeat whole dataset for several epoch, 
+        whole list needs to repeatedly reconstructed.
+        while and for loop is not allowed to enqueue, 
+        otherwise same element would enqueue several times, 
+        but cycle is a way to go around it"""
+        iter_order = itertools.cycle(self.yield_list)
+
         # iterate through all symbol and years
-        for iter_order_a, iter_order_b in self.yield_list:
+        for iter_order_a, iter_order_b in iter_order:
             transition_data = self.db_manager.get_unzipped_data(symbol = iter_order_a, year = iter_order_b-1, last_few_days = self.data_win_len -1)
             data_list = self.db_manager.get_unzipped_data(symbol = iter_order_a, year = iter_order_b)
             
@@ -108,7 +117,6 @@ class StockDataReader():
             elif transition_data is None and data_list is None:
                 print("{} {} does not have data".format(iter_order_a, iter_order_b))
                 continue
-
 
             if self.coord.should_stop():
                 stop = True
@@ -144,12 +152,19 @@ class StockDataReader():
                     # sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
-    def start_threads(self, sess, n_threads=2):
+    def start_threads(self, n_threads=2):
         for _ in range(n_threads):
-            thread = threading.Thread(target=self.main_thread_queue, args=(sess,))
+            thread = threading.Thread(target=self.main_thread_queue, args=())
             thread.daemon = True  # Thread will close when parent quits.
             thread.start()
             self.threads.append(thread)
+
+
+
+
+
+
+
 
 def main_list():
     reader = StockDataReader(data_dir =DEBUG_ROOT_PATH,
