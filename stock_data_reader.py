@@ -133,7 +133,7 @@ class StockDataReader():
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
 
             if data_window is not None:
-                # this window is the whole year data
+                # this window is the whole year data, flatten into one array
                 processed_data_window = self.preprocessor.batch_log_transform(data_window, self.configs)
 
                 # making sure the input into the queue has only one dimension
@@ -141,7 +141,7 @@ class StockDataReader():
                 assert np.array(processed_data_window).shape[1]==len(configs["data"]["features"])
 
                 # determine the length
-                forecast_steps = self.configs["training"]["forcast_steps"]
+                forecast_steps = self.configs["training"]["label_length"]
                 input_steps = self.configs["model"]["layers"]["input_timesteps"]
                 total_len = input_steps+forecast_steps
                 assert len(data_series)>=total_len
