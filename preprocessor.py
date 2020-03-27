@@ -39,12 +39,14 @@ class Preprocessor(object):
         win_length: int
         output: float[daily][feature][df], e.g. float[day 1][price df, volume df]
         """
+        res = []
         for i in range(0, len(original_list)-win_length+1):
             window = original_list[i: i+win_length]
 
             if len(window) > 0:
-                yield window
+                res.append(window) 
 
+        return res
 
 
     def log_return(self, a, b):
