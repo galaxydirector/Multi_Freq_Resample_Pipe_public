@@ -139,7 +139,7 @@ class StockDataReader():
 
 				# determine the length
 				forecast_steps = self.configs["data"]["label_length"]
-				input_steps = self.configs["model"]["layers"]["input_timesteps"]
+				input_steps = self.configs["data"]["feature_length"]
 				total_len = input_steps+forecast_steps
 				assert len(data_series)>=total_len
 
