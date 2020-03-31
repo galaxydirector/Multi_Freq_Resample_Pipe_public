@@ -1,12 +1,12 @@
 # Stable version
 
-import re
+# import re
 import os
 import os.path as path
 import tensorflow as tf
 import pandas as pd
-from glob import glob
-from tqdm import tqdm
+# from glob import glob
+# from tqdm import tqdm
 import itertools
 import numpy as np
 # import multiprocessing as mp
