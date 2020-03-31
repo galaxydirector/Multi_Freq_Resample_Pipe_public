@@ -14,8 +14,8 @@ import numpy as np
 import threading
 import time
 
-from preprocessor import Preprocessor
-from db_manager import DBManager
+from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
+from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
 print("dependency loaded")
 
 DEBUG_ROOT_PATH = os.path.expanduser("~/Desktop/wrds_data/seconds_data/")
