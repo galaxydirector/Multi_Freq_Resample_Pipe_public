@@ -141,7 +141,7 @@ class StockDataReader():
 				forecast_steps = self.configs["data"]["label_length"]
 				input_steps = self.configs["data"]["feature_length"]
 				total_len = input_steps+forecast_steps
-				assert len(data_series)>=total_len
+				assert len(processed_data_window)>=total_len
 
 				# feed in the exact length to queue
 				for i in range(len(processed_data_window)-total_len+1):
