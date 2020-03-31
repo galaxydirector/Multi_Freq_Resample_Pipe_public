@@ -138,7 +138,7 @@ class StockDataReader():
 				assert np.array(processed_data_window).shape[1]==len(self.configs["data"]["features"])
 
 				# determine the length
-				forecast_steps = self.configs["training"]["label_length"]
+				forecast_steps = self.configs["data"]["label_length"]
 				input_steps = self.configs["model"]["layers"]["input_timesteps"]
 				total_len = input_steps+forecast_steps
 				assert len(data_series)>=total_len
