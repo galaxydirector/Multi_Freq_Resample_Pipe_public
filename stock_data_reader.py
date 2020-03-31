@@ -125,7 +125,7 @@ class StockDataReader():
 			# convert from seconds to minutes
 			# TODO: extend variable to multiple, price/volume: completed
 			# resampled_data_matrix[daily][df]
-			resampled_data_matrix = [self.preprocessor.to_minute_data(data) for data in new_data_list]
+			resampled_data_matrix = [self.preprocessor.to_minute_data(configs, data) for data in new_data_list]
 			# data_win_len is how many days to look at in one window
 			# data_window = self.preprocessor.sliding_window(resampled_data_matrix, self.data_win_len)
 
