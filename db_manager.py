@@ -30,7 +30,7 @@ class DBManager(object):
         try:
             assert len(archive_names) > 0
         except Exception as e:
-            print("No data found in the database!")
+            print("No data found in the database! ")
             raise e
 
         try:
