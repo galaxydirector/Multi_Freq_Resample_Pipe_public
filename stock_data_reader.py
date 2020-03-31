@@ -129,7 +129,7 @@ class StockDataReader():
 			# data_win_len is how many days to look at in one window
 			# data_window = self.preprocessor.sliding_window(resampled_data_matrix, self.data_win_len)
 
-			if data_window is not None:
+			if resampled_data_matrix is not None:
 				# this window is the whole year data, flatten into one array
 				processed_data_window = self.preprocessor.batch_log_transform(resampled_data_matrix, self.configs)
 
