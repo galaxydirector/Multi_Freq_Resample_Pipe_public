@@ -16,7 +16,7 @@ import time
 
 from preprocessor import Preprocessor
 from db_manager import DBManager
-print("dependency loaded")
+print("StockDataReader Dependency Loaded")
 
 DEBUG_ROOT_PATH = os.path.expanduser("~/Desktop/wrds_data/seconds_data/")
 
