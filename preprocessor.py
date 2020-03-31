@@ -29,7 +29,7 @@ class Preprocessor(object):
         date = stock_data_df.index
         mapping = {"price":stock_price, "volume":trade_size, "date": date}
 
-        columns = [mapping[feature] for feature in self.configs["data"]["features"]]
+        columns = [mapping[feature] for feature in configs["data"]["features"]]
 
         # output is a numpy array, with one day data and all features
         return pd.concat(columns, axis=1).values.reshape(-1, len(configs["data"]["features"]))
@@ -69,7 +69,7 @@ class Preprocessor(object):
         
         args:
         data_window: data_window[daily][df]
-        
+
         df has dimension of (time_series_steps, num_features)
 
         output: 
