@@ -131,7 +131,7 @@ class StockDataReader():
 
 			if resampled_data_matrix is not None:
 				# this window is the whole year data, flatten into one array
-				processed_data_window = self.preprocessor.batch_log_transform(resampled_data_matrix, self.configs)
+				processed_data_window = self.preprocessor.batch_log_transform(resampled_data_matrix)
 
 				# making sure the input into the queue has only one dimension
 				# TODO: extend dimension to multiple: completed!
