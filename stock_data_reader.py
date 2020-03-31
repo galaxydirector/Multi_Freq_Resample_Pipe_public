@@ -53,7 +53,7 @@ class StockDataReader():
 		# self.trans_placeholder = tf.compat.v1.placeholder(dtype=tf.float32, shape=None)
 		self.trans_queue = tf.queue.PaddingFIFOQueue(queue_size,
 										 ['float32'],
-										 shapes=[(None, self.configs["data"]["features"])]) ### TODO: shape needs to be a variable
+										 shapes=[(None, len(self.configs["data"]["features"]))]) ### TODO: shape needs to be a variable
 		# self.trans = self.trans_queue.enqueue([self.trans_placeholder])
 		# for multithreading:
 		self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
