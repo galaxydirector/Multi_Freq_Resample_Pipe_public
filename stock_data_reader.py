@@ -126,7 +126,7 @@ class StockDataReader():
             # TODO: extend variable to multiple, price/volume: completed
             # resampled_data_list[daily][feature][data]
             resampled_data_list = [[self.preprocessor.to_minute_data(data).get(feature) \
-                                    for feature in self.config["data"]["features"]] \
+                                    for feature in self.configs["data"]["features"]] \
                                     for data in new_data_list]
             # data_win_len is how many days to look at in one window
             data_window = self.preprocessor.sliding_window(resampled_data_list, self.data_win_len)
