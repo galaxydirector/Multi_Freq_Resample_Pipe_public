@@ -155,6 +155,7 @@ class StockDataReader():
 			thread.daemon = True  # Thread will close when parent quits.
 			thread.start()
 			self.threads.append(thread)
+			time.sleep(1)
 
 
 
