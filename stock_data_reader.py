@@ -138,14 +138,18 @@ class StockDataReader():
 				assert np.array(processed_data_window).shape[1]==len(self.configs["data"]["features"])
 
 				# determine the length
-				forecast_steps = self.configs["data"]["label_length"]
-				input_steps = self.configs["data"]["feature_length"]
-				total_len = input_steps+forecast_steps
-				assert len(processed_data_window)>=total_len
+				# forecast_steps = self.configs["data"]["label_length"]
+				# input_steps = self.configs["data"]["feature_length"]
+				# total_len = input_steps+forecast_steps
+				# assert len(processed_data_window)>=total_len
 
-				# feed in the exact length to queue
-				for i in range(len(processed_data_window)-total_len+1):
-					self.trans_queue.enqueue((processed_data_window[i:i+total_len],))
+				# input the whole year
+				self.trans_queue.enqueue((processed_data_window,))
+				
+
+				# # feed in the exact length to queue
+				# for i in range(len(processed_data_window)-total_len+1):
+				# 	self.trans_queue.enqueue((processed_data_window[i:i+total_len],))
 					# sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
