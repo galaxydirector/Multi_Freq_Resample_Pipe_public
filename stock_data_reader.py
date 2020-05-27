@@ -84,9 +84,11 @@ class StockDataReader():
 
 		return full_stock_data_list
 
+	# deprecated 
+	def dequeue_trans_many(self,num_elements):
+		return self.trans_queue.dequeue_many(num_elements)
 
-	def dequeue_trans(self, num_elements):
-# 		return self.trans_queue.dequeue_many(num_elements)
+	def dequeue_trans(self):
 		return self.trans_queue.dequeue()
 
 	def main_thread_queue(self):
