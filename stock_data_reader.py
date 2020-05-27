@@ -32,7 +32,7 @@ class StockDataReader():
 				symbol_first,
 				data_win_len,
 				receptive_field=None,
-				queue_size=500):
+				queue_size=5):
 		# system initialize
 		self.db_manager = DBManager(data_dir)
 		self.preprocessor = Preprocessor()
@@ -86,7 +86,8 @@ class StockDataReader():
 
 
 	def dequeue_trans(self, num_elements):
-		return self.trans_queue.dequeue_many(num_elements)
+# 		return self.trans_queue.dequeue_many(num_elements)
+		return self.trans_queue.dequeue()
 
 	def main_thread_queue(self):
 		stop = False
