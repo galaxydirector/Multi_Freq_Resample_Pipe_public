@@ -36,6 +36,27 @@ class Preprocessor(object):
         return pd.concat(columns, axis=1).values.reshape(-1, len(configs["data"]["features"]))
 
     
+    def groupby_time(self,configs,stock_data_dfs,time_range,method,include_otc=False):
+
+        if method == 'day':
+            i = 0
+            res = []
+            while i < len(stock_data_dfs):
+                tmp = stock_data_dfs[i:i+time_range]
+                res.append(self.__day_range__(configs,tmp,time_range,include_otc=False))
+                i = i + time_range
+
+            return res
+
+
+
+        elif method == 'minute':
+            return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
+
+        elif method == 'hour':
+            time_range = 60 ### Double check
+            return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
+
 
     def __minute_range_helper__(self,stock_data_df,time_range,include_otc=False):
         '''
@@ -61,6 +82,7 @@ class Preprocessor(object):
         new_df.set_index('DATETIME')
         return new_df
     
+
     def __minute_range__(self,configs,stock_data_df,time_range,include_otc=False):
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
         features = configs["data"]["features"]
@@ -95,20 +117,6 @@ class Preprocessor(object):
         mapping = {"price":"PRICE", "volume":"SIZE",'days':'days'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
     
-    def groupby_time(self,configs,stock_data_dfs,time_range,method,include_otc=False):
-
-        if method == 'day':
-            i = 0
-            res = []
-            while i < len(stock_data_dfs):
-                tmp = stock_data_dfs[i:i+time_range]
-                res.append(self.__day_range__(configs,tmp,time_range,include_otc=False))
-                i = i + time_range
-
-            return res
-
-        if method == 'minute':
-            return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
 
 
 
