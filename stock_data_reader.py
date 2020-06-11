@@ -13,6 +13,7 @@ import numpy as np
 # from multiprocessing import Pool, cpu_count
 import threading
 import time
+import datetime
 
 from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
 from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
@@ -23,7 +24,7 @@ symbol_list = ['FB','JPM','XOM']
 # 'FB','JPM','XOM','GOOG','BAC','AAPL','MSFT','AAPL', 'AMZN','JNJ','INTC','CVX','WFC','V','UNH','HD', 'PFE', 'CSCO', 'T'
 
 
-class StockDataReader():
+class StockDataReader:
 	def __init__(self, configs,
 				data_dir,
 				coord,
@@ -47,6 +48,7 @@ class StockDataReader():
 		self.year_range = year_range
 		self.symbol_first = symbol_first
 		self.data_win_len = data_win_len
+		# deprecated
 		self.receptive_field = receptive_field
 
 		# queue setup
@@ -170,6 +172,170 @@ class StockDataReader():
 
 
 
+class StockDataReaderForTest(StockDataReader):
+	def __init__(self, configs,
+				data_dir,
+				coord,
+				symbol_list,
+				year_range,
+				symbol_first,
+				data_win_len,
+				receptive_field=None,
+				queue_size=5):
+		
+		super().__init__(configs,
+				data_dir,
+				coord,
+				symbol_list,
+				year_range,
+				symbol_first,
+				data_win_len,
+				receptive_field=None,
+				queue_size=5)
+		self.trans_queue = None
+		self.yield_list = []
+
+	def __format_process__(df):
+		try:    
+			col_test = len(df['DATETIME'])
+		except KeyError as e:
+			df = df.rename(columns={'index':'DATETIME'})
+		if type(df['DATETIME'][0]) == str:
+			df['DATETIME'] = df['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
+		return df
+
+	def __search_specific_date__(array,t):
+		'''
+		Applied Binary Search
+		input:
+			array: the data list contains dataframes for each day
+			t: the input date
+		return:
+			the index where the date locates
+		'''
+		#t = datetime.datetime.strptime(date,"%Y-%m-%d").date()
+		low = 0
+		height = len(array)-1
+		while low <= height:
+			mid = (low+height)//2
+			#print(type(array[mid]))
+			array[mid] = __format_process__(array[mid])
+
+			if array[mid]['DATETIME'][0].date() < t:
+				low = mid + 1
+
+			elif array[mid]['DATETIME'][0].date() > t:
+				height = mid - 1
+
+			else:
+				return mid
+
+		return low
+
+	def __search_date_period__(year,month,day,window,date_list):
+		'''
+		input:
+			year: int, the year of input date
+			month: int, the month of input date
+			day: int, the day of input date
+			window: int, the window size
+			date_list: list of dataframes, each dataframe contains the data of a certain day.
+						The list is sorted by date in ascending order.
+						Each dataframe contains columns including DATETIME, PRICE, SIZE, SYMBOL
+		return:
+			res: list, a list of dataframes, 
+				containing dataframe whose date range in [input date-window,input date] 
+				each dataframe contains columns including DATETIME, PRICE, SIZE, SYMBOL
+		'''
+		date = datetime.date(year,month,day)
+		res = []
+		
+		date_list[0] = __format_process__(date_list[0])
+
+		l = date_list[0]['DATETIME'][0]
+
+		if date < l:
+			return res
+			#raise Exception("OUT OF RANGE!")
+		
+		index = __search_specific_date__(date_list,date)
+		
+		date_list[index] = __format_process__(date_list[index])
+		
+		if type(date_list[index]) == str:
+			date_list[index]['DATETIME'] = date_list[index]['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
+		
+		if date_list[index]['DATETIME'][0].date() != date:
+			return res
+
+		
+		res = date_list[max(0,index - window):index+1]
+		
+		for i in range(len(res)):
+			res[i] = __format_process__(res[i])
+		return res
+
+	def search_small_period(year,month,day,hour,minute,second,window,date_list,config):
+		'''
+		input:
+			year : int , the year of a certrain time
+			month : int , the month of a certrain time
+			day : int, the day of a certrain time
+			hour : int, the hour of a certrain time
+			minute : int, the minute of a certrain time
+			second : int, the second of a certrain time
+			window: the window size [hours,minutes,seconds] = [24,25,18]
+			date_list: list, a list of dataframe, each dataframe contains the data of a certrain day
+						including DATETIME, PRICE, SIZE, SYMBOL,
+						the dataframes are sorted according to date in asscending order.
+
+		return:
+			res: list, a list of dataframe, each dataframe contains the data of a certrain day
+						including DATETIME, PRICE, SIZE, SYMBOL,
+						the dataframes are sorted according to date in asscending order.
+						All the data in the list locates between [input time-window,input time]
+		'''
+		res = []
+		time = str(year)+'-'+str(month)+'-'+str(day)+' '+ str(hour) + ':'+ str(minute)+ ':'+ str(second)
+		date = datetime.datetime.strptime(time,"%Y-%m-%d %H:%M:%S")
+		window_d = (window[0]/24 + window[1]/(24*60) + window[2]/(24*3600)) + 1
+		if window_d < 100:
+			window_d += 5
+		else:
+			window_d *= 1.05
+		window_d = int(window_d)
+		
+		days = __search_date_period__(year,month,day,window_d,date_list)
+		if len(days) == 0:
+			return []
+		
+		total_len = (config["data"]["label_length"] + config["data"]["feature_length"]) * 60
+		i = len(days) - 1
+		while i >= 0:
+			day = days[i]
+			if i == len(days) - 1:
+				tmp = day[day['DATETIME'] <= date]
+				total_len -= len(tmp)
+			else:
+				total_len -= len(days[i])
+			if total_len <=0:
+				break
+				
+			i = i - 1
+		
+		if total_len > 0:
+			return []
+		
+		res = days[i:]
+		res[-1] = tmp
+			
+		return res
+
+
+
+
+
+
 
 def main_list():
 	reader = StockDataReader(data_dir =DEBUG_ROOT_PATH,
@@ -216,6 +382,36 @@ def queue_thread_main():
 
 	trans = trans_full_list.reshape(-1,1)
 	np.savetxt(os.path.expanduser('~/Desktop/research/transformation/test/tests.csv'), np.array(trans),delimiter=',')
+
+
+def main_reader_for_test():
+	coord = tf.train.Coordinator()
+	session_config = tf.compat.v1.ConfigProto(inter_op_parallelism_threads = 0,
+								intra_op_parallelism_threads = 0)
+	reader = StockDataReaderForTest(configs = session_config,
+				data_dir = "Database/2014/FB/",
+				coord = coord,
+				symbol_list = ['FB'],
+				year_range = range(2015, 2016),
+				symbol_first = True,
+				data_win_len = 6,
+				receptive_field = 5*390+5)
+	
+	db_manager = DBManager("Database/2014/FB/",recursion_level=0)
+	db_manager1 = DBManager("Database/2015/FB/",recursion_level=0)
+	data = db_manager.get_unzipped_data(symbol = 'FB', year = 2014)
+	data_2015 = db_manager1.get_unzipped_data(symbol = 'FB', year = 2015)
+	data.extend(data_2015)
+	a = time.time()
+	res1 = search_date_period(2014,10,9,3,data)
+	b = time.time()
+	print(b-a)
+	res2 = search_small_period(2015,5,11,9,30,1,[24,2,1],data)
+	print(time.time()-b)
+	print(res1)
+	print("____________________________________")
+	print(res2)
+
 
 
 if __name__ == '__main__':
