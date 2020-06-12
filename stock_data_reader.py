@@ -5,12 +5,9 @@ import os
 import os.path as path
 import tensorflow as tf
 import pandas as pd
-# from glob import glob
-# from tqdm import tqdm
+
 import itertools
 import numpy as np
-# import multiprocessing as mp
-# from multiprocessing import Pool, cpu_count
 import threading
 import time
 import datetime
@@ -56,11 +53,11 @@ class StockDataReader:
 		self.trans_queue = tf.queue.PaddingFIFOQueue(queue_size,
 										 ['float32'],
 										 shapes=[(None, len(self.configs["data"]["features"]))]) ### TODO: shape needs to be a variable
-		# self.trans = self.trans_queue.enqueue([self.trans_placeholder])
+
 		# for multithreading:
 		self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
 		
-		
+	# deprecated
 	def main_thread(self, sess):
 		full_stock_data_list =[]
 		full_sig_data_list = []

@@ -1,9 +1,5 @@
 import pandas as pd
 import numpy as np
-# from multiprocessing import Pool, cpu_count
-# from tqdm import tqdm
-
-
 
 
 class Preprocessor(object):
@@ -48,19 +44,17 @@ class Preprocessor(object):
 
             return res
 
-
-
         elif method == 'minute':
             return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
 
         elif method == 'hour':
-            time_range = 60 ### Double check
+            time_range = 60 ### TODO: Double check
             return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
 
 
     def __minute_range_helper__(self,stock_data_df,time_range,include_otc=False):
         '''
-        range: int, the time range in minutes
+        time_range: int, the time range in minutes
         '''
         try:
             stock_data_df['days'] = stock_data_df['DATETIME']
@@ -77,6 +71,8 @@ class Preprocessor(object):
 
         new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
         new_df['SIZE'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
+        # TODO: more features: low, high, close, open
+
         new_df = new_df.reset_index()
         new_df['days'] = new_df['DATETIME']
         new_df.set_index('DATETIME')
