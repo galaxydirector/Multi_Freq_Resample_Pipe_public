@@ -192,7 +192,7 @@ class StockDataReaderForTest(StockDataReader):
 		self.trans_queue = None
 		self.yield_list = []
 
-	def __format_process__(df):
+	def __format_process__(self, df):
 		try:    
 			col_test = len(df['DATETIME'])
 		except KeyError as e:
@@ -201,7 +201,7 @@ class StockDataReaderForTest(StockDataReader):
 			df['DATETIME'] = df['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
 		return df
 
-	def __search_specific_date__(array,t):
+	def __search_specific_date__(self, array, t):
 		'''
 		Applied Binary Search
 		input:
@@ -216,7 +216,7 @@ class StockDataReaderForTest(StockDataReader):
 		while low <= height:
 			mid = (low+height)//2
 			#print(type(array[mid]))
-			array[mid] = __format_process__(array[mid])
+			array[mid] = self.__format_process__(array[mid])
 
 			if array[mid]['DATETIME'][0].date() < t:
 				low = mid + 1
@@ -229,7 +229,7 @@ class StockDataReaderForTest(StockDataReader):
 
 		return low
 
-	def __search_date_period__(year,month,day,window,date_list):
+	def __search_date_period__(self, year, month, day, window, date_list):
 		'''
 		input:
 			year: int, the year of input date
@@ -247,32 +247,32 @@ class StockDataReaderForTest(StockDataReader):
 		date = datetime.date(year,month,day)
 		res = []
 		
-		date_list[0] = __format_process__(date_list[0])
+		# date_list[0] = self.__format_process__(date_list[0])
 
-		l = date_list[0]['DATETIME'][0]
+		# l = date_list[0]['DATETIME'][0]
 
-		if date < l:
-			return res
+		# if date < l:
+		# 	return res,date
 			#raise Exception("OUT OF RANGE!")
 		
-		index = __search_specific_date__(date_list,date)
+		index = self.__search_specific_date__(date_list,date)
 		
-		date_list[index] = __format_process__(date_list[index])
+		date_list[index] = self.__format_process__(date_list[index])
 		
 		if type(date_list[index]) == str:
 			date_list[index]['DATETIME'] = date_list[index]['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
 		
 		if date_list[index]['DATETIME'][0].date() != date:
-			return res
+			return res,date
 
 		
 		res = date_list[max(0,index - window):index+1]
 		
 		for i in range(len(res)):
-			res[i] = __format_process__(res[i])
-		return res
+			res[i] = self.__format_process__(res[i])
+		return res,date
 
-	def search_small_period(year,month,day,hour,minute,second,window,date_list,config):
+	def search_small_period(self,year,month,day,hour,minute,second,window,date_list):
 		'''
 		input:
 			year : int , the year of a certrain time
@@ -302,15 +302,17 @@ class StockDataReaderForTest(StockDataReader):
 			window_d *= 1.05
 		window_d = int(window_d)
 		
-		days = __search_date_period__(year,month,day,window_d,date_list)
+		days,_ = self.__search_date_period__(year,month,day,window_d,date_list)
+		#print('checkpoint1')
 		if len(days) == 0:
-			return []
+			return [],date
 		
-		total_len = (config["data"]["label_length"] + config["data"]["feature_length"]) * 60
+		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
 		i = len(days) - 1
+
 		while i >= 0:
 			day = days[i]
-			if i == len(days) - 1:
+			if i == len(days) - 1:		
 				tmp = day[day['DATETIME'] <= date]
 				total_len -= len(tmp)
 			else:
@@ -319,16 +321,54 @@ class StockDataReaderForTest(StockDataReader):
 				break
 				
 			i = i - 1
-		
+		#print('checkpoint2')
 		if total_len > 0:
-			return []
+			return [],date
 		
 		res = days[i:]
 		res[-1] = tmp
-			
-		return res
+		# print('checkpoint3')
+		return res,date
 
+	def plt_plot(self,symbol,
+						year,
+						month,
+						day,
+						hour,
+						minute,
+						second,
+						window, method, time_range):
+		# TODO: generalize this?
+		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
+		data = db_manager.get_unzipped_data(symbol = symbol, year = year)
+		if month == 1 and year != 2012: ### TODO: generalize, remove magic number
+			# TODO: DB generalize
+			db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0)	
+			data.extend(db_manager.get_unzipped_data(symbol = symbol, year = year-1))
+		else:
+			pass
+		res,input_date = self.search_small_period(year,
+													month,
+													day,hour,minute,second,
+													window,data)
+		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 
+		_,prev_close,logs,ori_prices,times = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+
+		#logs
+		plt.figure(1,figsize=(20,10))
+		plt.title('logs')
+		plt.plot(times,logs,'*')
+		print(logs)
+
+		#price
+		plt.figure(2,figsize=(80,40))
+		plt.title('price')
+		plt.plot(ori_prices[:-1],'b*')
+		plt.xticks(np.arange(len(times)-1), times)
+		
+		# plt.plot(times[-1],ori_prices[-1],'r*')
+		# plt.plot(times[-1],ori_prices[-1]+0.05,'o')
 
 
 
