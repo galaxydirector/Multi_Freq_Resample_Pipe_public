@@ -5,7 +5,6 @@ import pandas as pd
 from glob import glob
 from tqdm import tqdm
 
-
 class DBManager(object):
     """DBManager helps locating all the archives containing stock data from year 1990 to 2018"""
     
