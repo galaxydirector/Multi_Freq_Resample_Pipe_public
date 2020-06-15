@@ -339,6 +339,7 @@ class StockDataReaderForTest(StockDataReader):
 						second,
 						window, method, time_range):
 		# TODO: generalize this?
+		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
 		data = db_manager.get_unzipped_data(symbol = symbol, year = year)
 		if month == 1 and year != 2012: ### TODO: generalize, remove magic number
