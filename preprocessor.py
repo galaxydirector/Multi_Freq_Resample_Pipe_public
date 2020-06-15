@@ -27,13 +27,15 @@ class Preprocessor(object):
         mapping = {"price":stock_price, "volume":trade_size, "date": date}
 
         columns = [mapping[feature] for feature in configs["data"]["features"]]
-
+        print(columns)
         # output is a numpy array, with one day data and all features
         return pd.concat(columns, axis=1).values.reshape(-1, len(configs["data"]["features"]))
 
     
     def groupby_time(self,configs,stock_data_dfs,time_range,method,include_otc=False):
-
+        """
+        stock_data_dfs: list of dfs
+        """
         if method == 'day':
             i = 0
             res = []
@@ -57,13 +59,13 @@ class Preprocessor(object):
         time_range: int, the time range in minutes
         '''
         try:
-            stock_data_df['days'] = stock_data_df['DATETIME']
+            stock_data_df['DATETIME'] = stock_data_df['DATETIME']
             stock_data_df = stock_data_df.set_index('DATETIME')
         except KeyError as e:
             
             stock_data_df['index'] = pd.to_datetime(stock_data_df['index'], format='%Y-%m-%d %H:%M:%S')
             stock_data_df = stock_data_df.rename(columns = {'index':'DATETIME'})
-            stock_data_df['days'] = stock_data_df['DATETIME']
+            stock_data_df['DATETIME'] = stock_data_df['DATETIME']
             stock_data_df = stock_data_df.set_index('DATETIME')
 
         if not include_otc:
@@ -74,7 +76,7 @@ class Preprocessor(object):
         # TODO: more features: low, high, close, open
 
         new_df = new_df.reset_index()
-        new_df['days'] = new_df['DATETIME']
+        new_df['DATETIME'] = new_df['DATETIME']
         new_df.set_index('DATETIME')
         return new_df
     
@@ -82,8 +84,7 @@ class Preprocessor(object):
     def __minute_range__(self,configs,stock_data_df,time_range,include_otc=False):
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
         features = configs["data"]["features"]
-        features.append('days')
-        mapping = {"price":"PRICE", "volume":"SIZE",'days':'days'}
+        mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
 
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
 
@@ -106,11 +107,8 @@ class Preprocessor(object):
             new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
 
         
-        features = []
-        for feature in configs["data"]["features"]:
-            features.append(feature)
-        features.append('days')
-        mapping = {"price":"PRICE", "volume":"SIZE",'days':'days'}
+        features = configs["data"]["features"]
+        mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
     
 
