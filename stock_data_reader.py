@@ -16,8 +16,8 @@ from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
 from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
 print("StockDataReader Dependency Loaded")
 
-DEBUG_ROOT_PATH = os.path.expanduser("~/Desktop/wrds_data/seconds_data/")
-symbol_list = ['FB','JPM','XOM']
+DEBUG_ROOT_PATH = os.path.expanduser("~/Desktop/Time_Series/Database/")
+# symbol_list = ['FB','JPM','XOM']
 # 'FB','JPM','XOM','GOOG','BAC','AAPL','MSFT','AAPL', 'AMZN','JNJ','INTC','CVX','WFC','V','UNH','HD', 'PFE', 'CSCO', 'T'
 
 
