@@ -85,7 +85,6 @@ class Preprocessor(object):
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
         features = configs["data"]["features"]
         mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
-
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
 
 
