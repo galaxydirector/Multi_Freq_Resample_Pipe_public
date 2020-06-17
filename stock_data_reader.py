@@ -127,7 +127,9 @@ class StockDataReader:
 			# convert from seconds to minutes
 			# TODO: extend variable to multiple, price/volume: completed
 			# resampled_data_matrix[daily][df]
-			resampled_data_matrix = [self.preprocessor.to_minute_data(self.configs, data) for data in new_data_list]
+			# resampled_data_matrix = [self.preprocessor.to_minute_data(self.configs, data) for data in new_data_list]
+			resampled_data_matrix = self.preprocessor.groupby_time(self.configs, new_data_list, time_range=1, method='minute')
+
 			# data_win_len is how many days to look at in one window
 			# data_window = self.preprocessor.sliding_window(resampled_data_matrix, self.data_win_len)
 
@@ -192,7 +194,7 @@ class StockDataReaderForTest(StockDataReader):
 		self.trans_queue = None
 		self.yield_list = []
 
-	def __format_process__(self, df):
+	def __format_process__(self,df):
 		try:    
 			col_test = len(df['DATETIME'])
 		except KeyError as e:
@@ -216,7 +218,8 @@ class StockDataReaderForTest(StockDataReader):
 		while low <= height:
 			mid = (low+height)//2
 			#print(type(array[mid]))
-			array[mid] = self.__format_process__(array[mid])
+			array[mid] = self.preprocessor.__datetime_format_process__(array[mid])
+			# array[mid] = self.__format_process__(array[mid])
 
 			if array[mid]['DATETIME'][0].date() < t:
 				low = mid + 1
@@ -257,7 +260,8 @@ class StockDataReaderForTest(StockDataReader):
 		
 		index = self.__search_specific_date__(date_list,date)
 		
-		date_list[index] = self.__format_process__(date_list[index])
+		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])
+		# date_list[index] = self.__format_process__(date_list[index])
 		
 		if type(date_list[index]) == str:
 			date_list[index]['DATETIME'] = date_list[index]['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
@@ -269,7 +273,8 @@ class StockDataReaderForTest(StockDataReader):
 		res = date_list[max(0,index - window):index+1]
 		
 		for i in range(len(res)):
-			res[i] = self.__format_process__(res[i])
+			res[i] = self.preprocessor.__datetime_format_process__(res[i])
+			# res[i] = self.__format_process__(res[i])
 		return res,date
 
 	def search_small_period(self,year,month,day,hour,minute,second,window,date_list):

@@ -32,10 +32,12 @@ class Preprocessor(object):
         return pd.concat(columns, axis=1).values.reshape(-1, len(configs["data"]["features"]))
 
     
-    def groupby_time(self,configs,stock_data_dfs,time_range,method,include_otc=False):
+    def groupby_time(self,configs,file_system_df_list,time_range,method,include_otc=False):
         """
         stock_data_dfs: list of dfs
         """
+        stock_data_dfs = [self.__datetime_format_process__(i) for i in file_system_df_list]
+
         if method == 'day':
             i = 0
             res = []
@@ -47,11 +49,11 @@ class Preprocessor(object):
             return res
 
         elif method == 'minute':
-            return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
+            return [self.__minute_range__(configs,df,time_range,include_otc) for df in stock_data_dfs]
 
         elif method == 'hour':
             time_range = 60 ### TODO: Double check
-            return [self.__minute_range__(configs,df,time_range,include_otc=False) for df in stock_data_dfs]
+            return [self.__minute_range__(configs,df,time_range,include_otc) for df in stock_data_dfs]
 
 
     def __minute_range_helper__(self,stock_data_df,time_range,include_otc=False):
@@ -94,6 +96,7 @@ class Preprocessor(object):
         time_range: int, number of days 
         '''
         if time_range == 1:
+            # TODO: magic number?
             new_df = self.__minute_range_helper__(stock_data_dfs[0],24*60,include_otc=False)
 
         else:
@@ -103,6 +106,7 @@ class Preprocessor(object):
             for j in range(1,len(tmp_dfs)):
                 tmp_df = pd.concat([tmp_df,tmp_dfs[j]])
 
+            # TODO: magic number?
             new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
 
         
@@ -110,7 +114,23 @@ class Preprocessor(object):
         mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
     
+    # def __datetime_format_process__(self, df):
+    #     try:    
+    #         col_test = len(df['DATETIME'])
+    #     except KeyError as e:
+    #         df = df.rename(columns={'index':'DATETIME'})
+    #     if type(df['DATETIME'][0]) == str:
+    #         df['DATETIME'] = df['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
+    #     return df
 
+    def __datetime_format_process__(self,df):
+        try:    
+            col_test = len(df['DATETIME'])
+        except KeyError as e:
+            df = df.rename(columns={'index':'DATETIME'})
+        if type(df['DATETIME'][0]) == str:
+            df['DATETIME'] = df['DATETIME'].apply(lambda x: datetime.datetime.strptime(x,"%Y-%m-%d %H:%M:%S"))
+        return df
 
 
     def log_return(self, a, b):
