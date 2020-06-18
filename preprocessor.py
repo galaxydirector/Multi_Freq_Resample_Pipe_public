@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import datetime
 
 
 class Preprocessor(object):
@@ -8,7 +9,7 @@ class Preprocessor(object):
     def __init__(self):
         pass
 
-    # deprecated
+    # TODO: deprecated
     def to_minute_data(self, configs, stock_data_df, include_otc=False):
         try:
             stock_data_df['DATETIME'] = pd.to_datetime(stock_data_df['DATETIME'], format='%Y-%m-%d %H:%M:%S')
@@ -24,13 +25,14 @@ class Preprocessor(object):
         stock_price = stock_data_df['PRICE'].resample('1T').mean().fillna(method='ffill')
         trade_size = stock_data_df['SIZE'].resample('1T').sum().fillna(method='ffill')
         date = stock_data_df.index
+
         mapping = {"price":stock_price, "volume":trade_size, "date": date}
 
         columns = [mapping[feature] for feature in configs["data"]["features"]]
-        print(columns)
+        # print(columns)
         # output is a numpy array, with one day data and all features
         return pd.concat(columns, axis=1).values.reshape(-1, len(configs["data"]["features"]))
-
+        
     
     def groupby_time(self,configs,file_system_df_list,time_range,method,include_otc=False):
         """
