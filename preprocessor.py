@@ -127,7 +127,8 @@ class Preprocessor(object):
 
         
         features = configs["data"]["features"]
-        mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
+        mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
+                    'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
     
     # def __datetime_format_process__(self, df):
