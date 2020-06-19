@@ -11,6 +11,7 @@ import numpy as np
 import threading
 import time
 import datetime
+import matplotlib.pyplot as plt
 
 from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
 from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
@@ -334,6 +335,35 @@ class StockDataReaderForTest(StockDataReader):
 		res[-1] = tmp
 		# print('checkpoint3')
 		return res,date
+	
+	def search_feature_length_period(self,year,month,day,hour,minute,second,date_list):
+		date = datetime.date(year,month,day)
+		res = []		
+		index = self.__search_specific_date__(date_list,date)
+		
+		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])	
+		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
+		i = index
+
+		while i >= 0:
+			day = date_list[i]
+			if i == index:		
+				tmp = day[day['DATETIME'] <= date]
+				total_len -= len(tmp)
+			else:
+				total_len -= len(date_list[i])
+			if total_len <=0:
+				break
+				
+			i = i - 1
+		#print('checkpoint2')
+		if total_len > 0:
+			return [],date
+		
+		res = date_list[i:index+1]
+		res[-1] = tmp
+
+		return res,date			
 
 	def plt_plot(self,symbol,
 						year,
@@ -346,11 +376,16 @@ class StockDataReaderForTest(StockDataReader):
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
-		data = db_manager.get_unzipped_data(symbol = symbol, year = year)
-		if month == 1 and year != 2012: ### TODO: generalize, remove magic number
+		temp = db_manager.get_unzipped_data(symbol = symbol, year = year)
+		data = []
+		if month == 1: ### TODO: generalize, remove magic number
 			# TODO: DB generalize
-			db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0)	
-			data.extend(db_manager.get_unzipped_data(symbol = symbol, year = year-1))
+			try:
+				db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0)	
+				data.extend(db_manager.get_unzipped_data(symbol = symbol, year = year-1))
+				data.extend(temp)
+			except:
+				data.extend(temp)
 		else:
 			pass
 		res,input_date = self.search_small_period(year,

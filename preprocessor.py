@@ -57,7 +57,6 @@ class Preprocessor(object):
             time_range = 60 ### TODO: Double check
             return [self.__minute_range__(configs,df,time_range,include_otc) for df in stock_data_dfs]
 
-
     def __minute_range_helper__(self,stock_data_df,time_range,include_otc=False):
         '''
         time_range: int, the time range in minutes
@@ -78,14 +77,24 @@ class Preprocessor(object):
         new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
         new_df['SIZE'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
         # TODO: more features: low, high, close, open
+        new_df['low'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).max().fillna(method='ffill')['PRICE']
+        new_df['high'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).min().fillna(method='ffill')['PRICE']
+        new_df['open'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).first().fillna(method='ffill')['PRICE']
+        new_df['close'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).last().fillna(method='ffill')['PRICE']
 
         new_df = new_df.reset_index()
         new_df['DATETIME'] = new_df['DATETIME']
         new_df.set_index('DATETIME')
+        # print(new_df)
         return new_df
     
 
     def __minute_range__(self,configs,stock_data_df,time_range,include_otc=False):
+        '''
+        configs: the loaded config
+        stock_data_dfs: list, list of dataframe
+        time_range: int, number of minutes
+        '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
         features = configs["data"]["features"]
         mapping = {"price":"PRICE", "volume":"SIZE",'date':'DATETIME'}
@@ -95,10 +104,13 @@ class Preprocessor(object):
 
     def __day_range__(self,configs,stock_data_dfs,time_range,include_otc=False):
         '''
+        configs: the loaded config
+        stock_data_dfs: list, list of dataframe
         time_range: int, number of days 
         '''
         if time_range == 1:
             # TODO: magic number?
+            # solve in straight forward way
             new_df = self.__minute_range_helper__(stock_data_dfs[0],24*60,include_otc=False)
 
         else:
@@ -109,6 +121,7 @@ class Preprocessor(object):
                 tmp_df = pd.concat([tmp_df,tmp_dfs[j]])
 
             # TODO: magic number?
+            # make sure of the right way to group by
             new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
 
         
