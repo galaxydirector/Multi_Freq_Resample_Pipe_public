@@ -260,7 +260,8 @@ class StockDataReaderForTest(StockDataReader):
 			#raise Exception("OUT OF RANGE!")
 		
 		index = self.__search_specific_date__(date_list,date)
-		
+		# print(index)
+		# print(len(date_list))
 		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])
 		# date_list[index] = self.__format_process__(date_list[index])
 		
@@ -386,15 +387,17 @@ class StockDataReaderForTest(StockDataReader):
 			try:
 				db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0)	
 				data.extend(db_manager.get_unzipped_data(symbol = symbol, year = year-1))
-				data.extend(temp)
 			except:
-				data.extend(temp)
+				pass
 		else:
 			pass
+		data.extend(temp)
+
 		res,input_date = self.search_small_period(year,
 													month,
 													day,hour,minute,second,
 													window,data)
+
 		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 
 		_,prev_close,logs,ori_prices,times = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
