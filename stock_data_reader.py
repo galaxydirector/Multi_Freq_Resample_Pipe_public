@@ -345,6 +345,9 @@ class StockDataReaderForTest(StockDataReader):
 		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
 		i = index
 
+		time = str(year)+'-'+str(month)+'-'+str(day)+' '+ str(hour) + ':'+ str(minute)+ ':'+ str(second)
+		date = datetime.datetime.strptime(time,"%Y-%m-%d %H:%M:%S")
+
 		while i >= 0:
 			day = date_list[i]
 			if i == index:		
