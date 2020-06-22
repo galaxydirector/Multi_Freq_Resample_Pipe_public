@@ -279,6 +279,7 @@ class StockDataReaderForTest(StockDataReader):
 			# res[i] = self.__format_process__(res[i])
 		return res,date
 
+	# deprecated
 	def search_small_period(self,year,month,day,hour,minute,second,window,date_list):
 		'''
 		input:
@@ -338,6 +339,24 @@ class StockDataReaderForTest(StockDataReader):
 		return res,date
 	
 	def search_feature_length_period(self,year,month,day,hour,minute,second,date_list):
+		'''
+		input:
+			year : int , the year of a certrain time
+			month : int , the month of a certrain time
+			day : int, the day of a certrain time
+			hour : int, the hour of a certrain time
+			minute : int, the minute of a certrain time
+			second : int, the second of a certrain time
+			date_list: list, a list of dataframe, each dataframe contains the data of a certrain day
+						including DATETIME, PRICE, SIZE, SYMBOL,
+						the dataframes are sorted according to date in asscending order.
+
+		return:
+			res: list, a list of dataframe, each dataframe contains the data of a certrain day
+						including DATETIME, PRICE, SIZE, SYMBOL,
+						the dataframes are sorted according to date in asscending order.
+						All the data in the list locates between [input time-window,input time]
+		'''
 		date = datetime.date(year,month,day)
 		res = []		
 		index = self.__search_specific_date__(date_list,date)
