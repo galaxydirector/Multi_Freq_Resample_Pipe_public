@@ -395,7 +395,7 @@ class StockDataReaderForTest(StockDataReader):
 						hour,
 						minute,
 						second,
-						window, method, time_range):
+						method, time_range):
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -412,26 +412,52 @@ class StockDataReaderForTest(StockDataReader):
 			pass
 		data.extend(temp)
 
-		res,input_date = self.search_small_period(year,
-													month,
-													day,hour,minute,second,
-													window,data)
+		# deprecated
+		# res,input_date = self.search_small_period(year,
+		# 											month,
+		# 											day,hour,minute,second,
+		# 											window,data)
+
+		res,input_date = self.search_feature_length_period(year,month,
+														day,hour,
+														minute,second,
+														data)
 
 		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 
-		_,prev_close,logs,ori_prices,times = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+		_,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+
+		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
+		
+		fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
+		fig.autofmt_xdate()
 
 		#logs
-		plt.figure(1,figsize=(20,10))
-		plt.title('logs')
-		plt.plot(times,logs,'*')
-		print(logs)
+		ax1.set_title('log return')
+		ax1.plot(times,logs,'b*')
+		ax2.xaxis.grid(True, which='major')
+		ax1.xaxis.set_major_locator(plt.MultipleLocator(7))
 
 		#price
-		plt.figure(2,figsize=(80,40))
-		plt.title('price')
-		plt.plot(ori_prices[:-1],'b*')
-		plt.xticks(np.arange(len(times)-1), times)
+		ax2.set_title('price')
+		ax2.plot(times[:-1],ori_prices[:-1],'b*')
+
+		# ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
+		ax2.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
+		ax2.xaxis.set_minor_locator(plt.MultipleLocator(1))
+
+
+		# #logs
+		# plt.figure(1,figsize=(20,10))
+		# plt.title('logs')
+		# plt.plot(times,logs,'*')
+		# print(logs)
+
+		# #price
+		# plt.figure(2,figsize=(80,40))
+		# plt.title('price')
+		# plt.plot(ori_prices[:-1],'b*')
+		# plt.xticks(np.arange(len(times)-1), times)
 		
 		# plt.plot(times[-1],ori_prices[-1],'r*')
 		# plt.plot(times[-1],ori_prices[-1]+0.05,'o')
