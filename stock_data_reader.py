@@ -443,6 +443,8 @@ class StockDataReaderForTest(StockDataReader):
 		ax2.plot(times[:-1],ori_prices[:-1],'b*')
 
 		# ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
+		ax1.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
+		ax1.xaxis.set_minor_locator(plt.MultipleLocator(1))
 		ax2.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
 		ax2.xaxis.set_minor_locator(plt.MultipleLocator(1))
 
