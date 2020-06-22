@@ -429,6 +429,8 @@ class StockDataReaderForTest(StockDataReader):
 
 		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
 		
+
+		
 		fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
 		fig.autofmt_xdate()
 
