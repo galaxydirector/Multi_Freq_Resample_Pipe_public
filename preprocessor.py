@@ -97,6 +97,23 @@ class Preprocessor(object):
         '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
         features = configs["data"]["features"]
+        if len(features) >= 5:
+            for i in range(len(features)):
+                if features[i] == 'price':
+                    features[i] = features[0]
+                    features[0] = 'price'
+                elif features[i] == 'low':
+                    features[i] = features[1]
+                    features[1] = 'low'
+                elif features[i] == 'high':
+                    features[i] = features[2]
+                    features[2] = 'high'
+                elif features[i] == 'open':
+                    features[i] = features[3]
+                    features[3] = 'open'
+                elif features[i] == 'close':
+                    features[i] = features[4]
+                    features[4] = 'close'
         mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
                     'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
