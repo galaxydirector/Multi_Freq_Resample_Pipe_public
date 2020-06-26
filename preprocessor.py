@@ -74,7 +74,7 @@ class Preprocessor(object):
         '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
 
-        price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__price_sort_helper__(x))
+        price_features = sorted(configs["data"]["price_features"], key = lambda x : self.__price_sort_helper__(x))
         feature = price_features+configs["data"]["other_features"]
 
         # mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
@@ -82,7 +82,7 @@ class Preprocessor(object):
         # return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
         return new_df[[feature for feature in features]].values.reshape(-1, len(features))
 
-    def __price_sort_helper__(self,string):
+    def __price_sort_helper__(self, string):
         """
         Design purpose for those feature is to make sure they are aligned
 
@@ -171,7 +171,7 @@ class Preprocessor(object):
     
     # hour level: [mean_price,low,high,open_price, volume, MACD, RSI]
 
-    def batch_log_transform(self, data_window):
+    def batch_log_transform(self, configs, data_window):
         # TODO: handle OHLC
 
 
@@ -192,14 +192,15 @@ class Preprocessor(object):
         
         output = []
         for prev_day, one_day in zip(data_window, data_window[1:]):
-            prev_close = prev_day[-1][0]
+            prev_close = prev_day[-1][0] # this assumption still valid, after adding sorting in price
 
             for row in one_day:
                 temp = []
-                # row[0] is a hyper param, which price needs to be the first feature
-                temp.append(self.log_return(row[0],prev_close)) 
+                for i in range(len(configs["data"]["price_features"])):
+                    # row[0] is a hyper param, which price needs to be the first feature
+                    temp.append(self.log_return(row[i],prev_close)) 
                 # deep copy rest of features into matrix
-                for i in range(1,len(row)):
+                for i in range(len(configs["data"]["price_features"]),len(configs["data"]["price_features"])+len(configs["data"]["other_features"])):
                     temp.append(row[i])
 
                 # put every minute into the output
