@@ -427,7 +427,7 @@ class StockDataReaderForTest(StockDataReader):
 
 		_,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(self.configs,resampled_data_matrix)
 
-		times = [datetime.datetime.fromtimestamp(i) for i in timestamps]
+		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
 		
 
 		
