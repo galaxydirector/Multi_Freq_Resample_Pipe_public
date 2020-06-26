@@ -203,13 +203,13 @@ class Preprocessor(object):
                 for i in range(len(configs["data"]["price_features"]),len(configs["data"]["price_features"])+len(configs["data"]["other_features"])):
                     temp.append(row[i])
 
-                # put every minute into the output
+                # put every minute/day into the output
                 output.append(temp)
             # output.extend([self.log_return(now, prev_close) for now in one_day])
 
         return output
 
-    def batch_log_transform_for_test(self, data_window):
+    def batch_log_transform_for_test(self, configs, data_window):
         """
         This transformation uses log return for each minute 
         comparing to previous day close price
@@ -228,29 +228,43 @@ class Preprocessor(object):
         output = []
         logs = []
         times = []
-        ori_price = []
+        original_price = []
         prev_close = -1
 
-        
+        num_price_feature = len(configs["data"]["price_features"])
+
+        assert 'DATETIME' in configs["data"]["other_features"], "DATETIME feature must be in other_features"
+        assert 'DATETIME' == configs["data"]["other_features"][-1], "DATETIME feature must be the last in other_features"
+
 
         for prev_day, one_day in zip(data_window, data_window[1:]):
             prev_close = prev_day[-1][0]
             for row in one_day:
                 temp = []
+                log_temp = []
+                original_temp = []
                 # row[0] is a hyper param, which price needs to be the first feature
-                temp.append(self.log_return(row[0],prev_close)) 
-                logs.append(self.log_return(row[0],prev_close))
+                # TODO: 
+                for i in range(num_price_feature):
+                    temp.append(self.log_return(row[i],prev_close)) 
+                    log_temp.append(self.log_return(row[i],prev_close))
+                    original_temp.append(row[i])
+
+                # hardcoding, DATETIME of non price feature is datetime
                 times.append(row[-1])
-                ori_price.append(row[0])
-                # deep copy rest of features into matrix
-                for i in range(1,len(row)):
-                    temp.append(row[i])
+                
+                # other features are not necessary
+                # # deep copy rest of features into matrix
+                # for i in range(num_price_feature,len(row)):
+                #     temp.append(row[i])
 
                 # put every minute into the output
                 output.append(temp)
+                logs.append(log_temp)
+                original_price.append(original_temp)
             # output.extend([self.log_return(now, prev_close) for now in one_day])
 
-        return output,prev_close,logs,ori_price,times
+        return output,prev_close,logs,original_price,times
 
 
      # TODO: deprecated
