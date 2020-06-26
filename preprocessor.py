@@ -96,27 +96,27 @@ class Preprocessor(object):
         time_range: int, number of minutes
         '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
-        features = configs["data"]["features"]
-        if len(features) >= 5:
-            for i in range(len(features)):
-                if features[i] == 'price':
-                    features[i] = features[0]
-                    features[0] = 'price'
-                elif features[i] == 'low':
-                    features[i] = features[1]
-                    features[1] = 'low'
-                elif features[i] == 'high':
-                    features[i] = features[2]
-                    features[2] = 'high'
-                elif features[i] == 'open':
-                    features[i] = features[3]
-                    features[3] = 'open'
-                elif features[i] == 'close':
-                    features[i] = features[4]
-                    features[4] = 'close'
+        features = sorted(configs["data"]["features"], key= lambda x : self.__sort_helper__(x))
+
         mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
                     'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
+
+    def __sort_helper__(self,string):
+        if string == 'price':
+            return 1
+        elif string == 'low':
+            return 2
+        elif string == 'high':
+            return 3
+        elif string == 'open':
+            return 4
+        elif string == 'close':
+            return 5
+        elif string == 'datetime':
+            return 100
+        else:
+            return 50
 
     def __day_range__(self,configs,stock_data_dfs,time_range,include_otc=False):
         '''
