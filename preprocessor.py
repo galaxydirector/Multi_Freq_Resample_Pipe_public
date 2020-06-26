@@ -101,8 +101,6 @@ class Preprocessor(object):
                     'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
         return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
 
-
-
     def __day_range__(self,configs,stock_data_dfs,time_range,include_otc=False):
         '''
         configs: the loaded config
@@ -157,7 +155,23 @@ class Preprocessor(object):
         """
         return np.log(a)-np.log(b)
 
+    # [
+    # [price,volume,date],
+    # [price,volume,date],
+    # ]
+    # int[][] new_df;
+
+    # int[][][]
+    # data_window = [new_df,new_df,new_df] 
+
+    # minute level: [mean_price,volume,date]
+    
+    # hour level: [mean_price,low,high,open_price, volume, MACD, RSI]
+
     def batch_log_transform(self, data_window):
+        # TODO: handle OHLC
+
+
         """
         This transformation uses log return for each minute 
         comparing to previous day close price
