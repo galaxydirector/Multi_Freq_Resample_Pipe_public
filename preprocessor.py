@@ -253,7 +253,7 @@ class Preprocessor(object):
                 # hardcoding, DATETIME of non price feature is datetime
                 times.append(row[-1])
                 
-                # other features are not necessary
+                #### other features are not necessary?
                 # # deep copy rest of features into matrix
                 # for i in range(num_price_feature,len(row)):
                 #     temp.append(row[i])
