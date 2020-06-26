@@ -73,8 +73,8 @@ class Preprocessor(object):
         time_range: int, number of minutes
         '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
-        price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__price_sort_helper__(x))
 
+        price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__price_sort_helper__(x))
         feature = price_features+configs["data"]["other_features"]
 
         # mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
@@ -124,10 +124,13 @@ class Preprocessor(object):
             new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
 
         
-        features = configs["data"]["features"]
-        mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
-                    'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
-        return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
+        # features = configs["data"]["features"]
+        price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__price_sort_helper__(x))
+        feature = price_features+configs["data"]["other_features"]
+        # mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
+        #             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
+        # return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
+        return new_df[[feature for feature in features]].values.reshape(-1, len(features))
     
     # def __datetime_format_process__(self, df):
     #     try:    
