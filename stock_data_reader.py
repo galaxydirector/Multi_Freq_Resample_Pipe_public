@@ -427,7 +427,7 @@ class StockDataReaderForTest(StockDataReader):
 
 		_,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 
-		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
+		times = [datetime.datetime.fromtimestamp(i) for i in timestamps]
 		
 
 		
@@ -437,13 +437,13 @@ class StockDataReaderForTest(StockDataReader):
 		#logs
 		ax1.set_title('log return')
 		ax1.plot(times,logs,'b*')
-		ax2.xaxis.grid(True, which='major')
+		ax1.xaxis.grid(True, which='major')
 		ax1.xaxis.set_major_locator(plt.MultipleLocator(7))
 
 		#price
 		ax2.set_title('price')
 		ax2.plot(times[:-1],ori_prices[:-1],'b*')
-
+		ax2.xaxis.grid(True, which='major')
 		# ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
 		ax1.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
 		ax1.xaxis.set_minor_locator(plt.MultipleLocator(1))
