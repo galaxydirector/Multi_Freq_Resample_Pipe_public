@@ -54,8 +54,8 @@ class Preprocessor(object):
         new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
         new_df['VOLUME'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
         # TODO: more features: low, high, close, open
-        new_df['LOW'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).max().fillna(method='ffill')['PRICE']
-        new_df['HIGH'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).min().fillna(method='ffill')['PRICE']
+        new_df['LOW'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).min().fillna(method='ffill')['PRICE']
+        new_df['HIGH'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).max().fillna(method='ffill')['PRICE']
         new_df['OPEN'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).first().fillna(method='ffill')['PRICE']
         new_df['CLOSE'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).last().fillna(method='ffill')['PRICE']
 
