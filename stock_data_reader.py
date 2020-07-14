@@ -159,7 +159,7 @@ class StockDataReader:
 
 				# # feed in the exact length to queue
 				# for i in range(len(processed_data_window)-total_len+1):
-				# 	self.trans_queue.enqueue((processed_data_window[i:i+total_len],))
+				#   self.trans_queue.enqueue((processed_data_window[i:i+total_len],))
 					# sess.run(self.trans, feed_dict={self.trans_placeholder: processed_data_window[i:i+total_len]})
 
 
@@ -261,7 +261,7 @@ class StockDataReaderForTest(StockDataReader):
 		# l = date_list[0]['DATETIME'][0]
 
 		# if date < l:
-		# 	return res,date
+		#   return res,date
 			#raise Exception("OUT OF RANGE!")
 		
 		index = self.__search_specific_date__(date_list,date)
@@ -325,7 +325,7 @@ class StockDataReaderForTest(StockDataReader):
 
 		while i >= 0:
 			day = days[i]
-			if i == len(days) - 1:		
+			if i == len(days) - 1:      
 				tmp = day[day['DATETIME'] <= date]
 				total_len -= len(tmp)
 			else:
@@ -363,10 +363,10 @@ class StockDataReaderForTest(StockDataReader):
 						All the data in the list locates between [input time-window,input time]
 		'''
 		date = datetime.date(year,month,day)
-		res = []		
+		res = []        
 		index = self.__search_specific_date__(date_list,date)
 		
-		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])	
+		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])  
 		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
 		i = index
 
@@ -375,7 +375,7 @@ class StockDataReaderForTest(StockDataReader):
 
 		while i >= 0:
 			day = date_list[i]
-			if i == index:		
+			if i == index:      
 				tmp = day[day['DATETIME'] <= date]
 				total_len -= len(tmp)
 			else:
@@ -391,7 +391,7 @@ class StockDataReaderForTest(StockDataReader):
 		res = date_list[i:index+1]
 		res[-1] = tmp
 
-		return res,date			
+		return res,date         
 
 	def plt_plot(self,symbol,
 						year,
@@ -409,7 +409,7 @@ class StockDataReaderForTest(StockDataReader):
 		if month == 1: ### TODO: generalize, remove magic number
 			# TODO: DB generalize
 			try:
-				db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0)	
+				db_manager1 = DBManager("./Database/" + str(year-1) + "/" + symbol + "/",recursion_level=0) 
 				data.extend(db_manager.get_unzipped_data(symbol = symbol, year = year-1))
 			except:
 				pass
@@ -419,9 +419,9 @@ class StockDataReaderForTest(StockDataReader):
 
 		# deprecated
 		# res,input_date = self.search_small_period(year,
-		# 											month,
-		# 											day,hour,minute,second,
-		# 											window,data)
+		#                                           month,
+		#                                           day,hour,minute,second,
+		#                                           window,data)
 
 		res,input_date = self.search_feature_length_period(year,month,
 														day,hour,
