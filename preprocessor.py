@@ -62,13 +62,16 @@ class Preprocessor(object):
         time_range: int, the time range in minutes
         '''
         try:
-            stock_data_df['DATETIME'] = stock_data_df['DATETIME']
+            #stock_data_df['DATETIME'] = stock_data_df['DATETIME']
+            #print(stock_data_df)
+            stock_data_df['DATETIME'] = pd.to_datetime(stock_data_df['DATETIME'], format='%Y-%m-%d %H:%M:%S')
             stock_data_df = stock_data_df.set_index('DATETIME')
         except KeyError as e:
             
             stock_data_df['index'] = pd.to_datetime(stock_data_df['index'], format='%Y-%m-%d %H:%M:%S')
             stock_data_df = stock_data_df.rename(columns = {'index':'DATETIME'})
-            stock_data_df['DATETIME'] = stock_data_df['DATETIME']
+            stock_data_df['DATETIME'] = pd.to_datetime(stock_data_df['DATETIME'], format='%Y-%m-%d %H:%M:%S')
+            #stock_data_df['DATETIME'] = stock_data_df['DATETIME']
             stock_data_df = stock_data_df.set_index('DATETIME')
 
         if not include_otc:
@@ -77,8 +80,8 @@ class Preprocessor(object):
         new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
         new_df['SIZE'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
         # TODO: more features: low, high, close, open
-        new_df['LOW'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).max().fillna(method='ffill')['PRICE']
-        new_df['HIGH'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).min().fillna(method='ffill')['PRICE']
+        new_df['LOW'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).min().fillna(method='ffill')['PRICE']
+        new_df['HIGH'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).max().fillna(method='ffill')['PRICE']
         new_df['OPEN'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).first().fillna(method='ffill')['PRICE']
         new_df['CLOSE'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).last().fillna(method='ffill')['PRICE']
 
@@ -96,11 +99,15 @@ class Preprocessor(object):
         time_range: int, number of minutes
         '''
         new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
-        features = sorted(configs["data"]["features"], key= lambda x : self.__sort_helper__(x))
+        tmp = configs["data"]["price_features"] + configs["data"]["other_features"]
+        features = sorted(tmp, key= lambda x : self.__sort_helper__(x))
 
-        mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
-                    'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
-        return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
+        # mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
+        #             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
+        mapping = {"PRICE":"PRICE","VOLUME":"SIZE","DATETIME":'DATETIME'}
+        res_df = new_df[[mapping[feature] for feature in features]]
+        #res_df = new_df[tmp]
+        return res_df.values.reshape(-1, len(features)) #,new_df
 
     def __sort_helper__(self,string):
         if string == 'price':
@@ -144,7 +151,8 @@ class Preprocessor(object):
         features = configs["data"]["features"]
         mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
                     'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
-        return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
+        res_df = new_df[[mapping[feature] for feature in features]]
+        return res_df.values.reshape(-1, len(features))
     
     # def __datetime_format_process__(self, df):
     #     try:    

@@ -12,6 +12,10 @@ import threading
 import time
 import datetime
 import matplotlib.pyplot as plt
+import mplfinance as mpf
+import matplotlib.dates as mdates
+# from mpl_finance import candlestick_ohlc
+import finplot as fplt
 
 from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
 from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
@@ -53,7 +57,8 @@ class StockDataReader:
 		# self.trans_placeholder = tf.compat.v1.placeholder(dtype=tf.float32, shape=None)
 		self.trans_queue = tf.queue.PaddingFIFOQueue(queue_size,
 										 ['float32'],
-										 shapes=[(None, len(self.configs["data"]["features"]))]) ### TODO: shape needs to be a variable
+										 #shapes=[(None, len(configs["data"]["price_features"])+len(configs["data"]["other_features"])])
+										 shapes=[(None, len(configs["data"]["price_features"])+len(configs["data"]["other_features"]))]) ### TODO: shape needs to be a variable
 
 		# for multithreading:
 		self.yield_list = itertools.product(self.symbol_list, self.year_range) if self.symbol_first else itertools.product(self.year_range, self.symbol_list)
@@ -423,32 +428,40 @@ class StockDataReaderForTest(StockDataReader):
 														minute,second,
 														data)
 
-		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
-
+		temp = self.preprocessor.groupby_time(self.configs,res,time_range,method)
+		resampled_data_matrix = [tmp[0] for tmp in temp]
+		res_df = [tmp[1] for tmp in temp]
 		_,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 
-		times = [datetime.datetime.fromtimestamp(i) for i in timestamps]
+		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
+		res = res_df[0]
+		for i in range(1,len(res_df)):
+			res = pd.concat([res,res_df[i]])
 		
+		res = res.set_index('DATETIME')
+		res = res.rename(columns = {'OPEN':'Open','HIGH':'High','LOW':'Low','CLOSE':'Close'})
+		fplt.candlestick_ochl(res[['Open', 'Close', 'High', 'Low']])
+		fplt.show()
 
-		
-		fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
-		fig.autofmt_xdate()
 
-		#logs
-		ax1.set_title('log return')
-		ax1.plot(times,logs,'b*')
-		ax1.xaxis.grid(True, which='major')
-		ax1.xaxis.set_major_locator(plt.MultipleLocator(7))
+		# fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
+		# fig.autofmt_xdate()
 
-		#price
-		ax2.set_title('price')
-		ax2.plot(times[:-1],ori_prices[:-1],'b*')
-		ax2.xaxis.grid(True, which='major')
-		# ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
-		ax1.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
-		ax1.xaxis.set_minor_locator(plt.MultipleLocator(1))
-		ax2.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
-		ax2.xaxis.set_minor_locator(plt.MultipleLocator(1))
+		# #logs
+		# ax1.set_title('log return')
+		# ax1.plot(times,logs,'b*')
+		# ax1.xaxis.grid(True, which='major')
+		# ax1.xaxis.set_major_locator(plt.MultipleLocator(7))
+
+		# #price
+		# ax2.set_title('price')
+		# ax2.plot(times[:-1],ori_prices[:-1],'b*')
+		# ax2.xaxis.grid(True, which='major')
+		# # ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
+		# ax1.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
+		# ax1.xaxis.set_minor_locator(plt.MultipleLocator(1))
+		# ax2.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
+		# ax2.xaxis.set_minor_locator(plt.MultipleLocator(1))
 
 
 		# #logs
