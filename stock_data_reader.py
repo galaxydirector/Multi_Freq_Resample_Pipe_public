@@ -12,10 +12,10 @@ import threading
 import time
 import datetime
 import matplotlib.pyplot as plt
-import mplfinance as mpf
 import matplotlib.dates as mdates
+import mplfinance as mpf
 # from mpl_finance import candlestick_ohlc
-import finplot as fplt
+# import finplot as fplt
 
 from Multi_Freq_Resample_Pipe_public.preprocessor import Preprocessor
 from Multi_Freq_Resample_Pipe_public.db_manager import DBManager
@@ -438,7 +438,7 @@ class StockDataReaderForTest(StockDataReader):
 
 
 
-		
+
 		# res = res_df[0]
 		# for i in range(1,len(res_df)):
 		# 	res = pd.concat([res,res_df[i]])

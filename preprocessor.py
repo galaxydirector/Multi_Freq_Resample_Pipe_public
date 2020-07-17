@@ -226,14 +226,13 @@ class Preprocessor(object):
 		df has dimension of (time_series_steps, num_features)
 
 		output: 
-        float[][] original_price, a series tested period original price
-        float[][] log_price, a series tested period log transformed price
-        str[] date_time, a list of datetime
-        float prev_close, only record the -2 date close, to restore last day prediction
+		float[][] original_price, a series tested period original price
+		float[][] log_price, a series tested period log transformed price
+		str[] date_time, a list of datetime
+		float prev_close, only record the -2 date close, to restore last day prediction
 		"""
 
-		# output = []
-        original_price = []
+		original_price = []
 		log_price = []
 		date_time = []
 		
@@ -258,9 +257,6 @@ class Preprocessor(object):
 					log_temp.append(self.log_return(row[i],prev_close))
 					original_temp.append(row[i])
 
-				# hardcoding, DATETIME of non price feature is datetime
-				date_time.append(row[-1])
-				
 				#### other features are not necessary?
 				# # deep copy rest of features into matrix
 				# for i in range(num_price_feature,len(row)):
@@ -268,11 +264,29 @@ class Preprocessor(object):
 
 				# put every minute into the output
 				# output.append(temp)
-                original_price.append(original_temp)
+				original_price.append(original_temp)
 				log_price.append(log_temp)
+				# hardcoding, DATETIME of non price feature is datetime
+				date_time.append(row[-1])
+
 			# output.extend([self.log_return(now, prev_close) for now in one_day])
 
 		return original_price,log_price,date_time,prev_close
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	 # TODO: deprecated
