@@ -11,6 +11,7 @@ import numpy as np
 import threading
 import time
 import datetime
+from datetime import timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 # import mplfinance as mpf
@@ -428,15 +429,78 @@ class StockDataReaderForTest(StockDataReader):
 														minute,second,
 														data)
 
-		temp = self.preprocessor.groupby_time(self.configs,res,time_range,method)
-		resampled_data_matrix = [tmp[0] for tmp in temp]
-		res_df = [tmp[1] for tmp in temp]
+		# temp = self.preprocessor.groupby_time(self.configs,res,time_range,method)
+		# resampled_data_matrix = [tmp[0] for tmp in temp]
+
+		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
+		# res_df = [tmp[1] for tmp in temp]
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
-		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(configs, resampled_data_matrix)
+		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
 
-		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
+		times = [i.strftime('%b-%d %H:%M') for i in date_time]
+
+		def plot_one_minute():
+			# minute level
+			fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
+			fig.autofmt_xdate()
+
+			# plot_comparison_point_x = (date_time[-1]-timedelta(minutes=60)).strftime('%b-%d %H:%M')
+			prediction_price = 80
+			prediction_log = 0.005
+
+			#logs
+			ax1.set_title('log return')
+			ax1.plot(times,log_price,'bo')
+			ax1.plot(times[-1], log_price[-1],'ro',markersize=14)
+			ax1.plot(times[-1], prediction_log,'r*',markersize=14)
+			ax1.xaxis.grid(True, which='major')
+			ax1.xaxis.set_major_locator(plt.MaxNLocator(9))
+
+			#price
+			ax2.set_title('price')
+			ax2.plot(times[:-1], original_price[:-1],'bo')
+			ax2.plot(times[-1], original_price[-1],'ro',markersize=14)
+			ax2.plot(times[-1], prediction_price,'r*',markersize=14)
+			ax2.xaxis.grid(True, which='major')
+			ax2.xaxis.set_major_locator(plt.MaxNLocator(5))
+			# ax2.xaxis.set_minor_locator(mdates.HourLocator())
+
+		def plot_5_minute():
+			pass
+
+		def plot_30_minute():
+			pass 
+
+		def plot_60_minute():
+			pass
+
+		def plot_4_hours():
+			pass
+
+		def plot_one_day():
+			pass
+
+		if method=="minute":
+			if time_range==1:
+				
+				plot_one_minute()
+			elif time_range==5:
+				plot_5_minute()
+
+			elif time_range==30:
+				plot_30_minute()
+
+			elif time_range==60:
+				plot_60_minute()
+
+			elif time_range==240:
+				plot_4_hours()
 
 
+
+
+		elif method=="day":
+			pass
 
 
 		# res = res_df[0]
@@ -449,19 +513,19 @@ class StockDataReaderForTest(StockDataReader):
 		# fplt.show()
 
 
-		###### hourly level
+		# ###### hourly level
 		# fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
 		# fig.autofmt_xdate()
 
 		# #logs
 		# ax1.set_title('log return')
-		# ax1.plot(times,logs,'b*')
+		# ax1.plot(times,log_price,'bo')
 		# ax1.xaxis.grid(True, which='major')
 		# ax1.xaxis.set_major_locator(plt.MultipleLocator(7))
 
 		# #price
 		# ax2.set_title('price')
-		# ax2.plot(times[:-1],ori_prices[:-1],'b*')
+		# ax2.plot(times[:-1],original_price[:-1],'bo')
 		# ax2.xaxis.grid(True, which='major')
 		# # ax2.xaxis.set_major_locator(plt.MaxNLocator(10))
 		# ax1.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
