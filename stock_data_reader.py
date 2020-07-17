@@ -431,19 +431,25 @@ class StockDataReaderForTest(StockDataReader):
 		temp = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 		resampled_data_matrix = [tmp[0] for tmp in temp]
 		res_df = [tmp[1] for tmp in temp]
-		_,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(configs, resampled_data_matrix)
 
 		times = [i.strftime('%b-%d %H:%M') for i in timestamps]
-		res = res_df[0]
-		for i in range(1,len(res_df)):
-			res = pd.concat([res,res_df[i]])
+
+
+
 		
-		res = res.set_index('DATETIME')
-		res = res.rename(columns = {'OPEN':'Open','HIGH':'High','LOW':'Low','CLOSE':'Close'})
-		fplt.candlestick_ochl(res[['Open', 'Close', 'High', 'Low']])
-		fplt.show()
+		# res = res_df[0]
+		# for i in range(1,len(res_df)):
+		# 	res = pd.concat([res,res_df[i]])
+		
+		# res = res.set_index('DATETIME')
+		# res = res.rename(columns = {'OPEN':'Open','HIGH':'High','LOW':'Low','CLOSE':'Close'})
+		# fplt.candlestick_ochl(res[['Open', 'Close', 'High', 'Low']])
+		# fplt.show()
 
 
+		###### hourly level
 		# fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
 		# fig.autofmt_xdate()
 
@@ -463,7 +469,7 @@ class StockDataReaderForTest(StockDataReader):
 		# ax2.xaxis.set_major_locator(plt.MultipleLocator(7)) # if 1 hour level, then 7
 		# ax2.xaxis.set_minor_locator(plt.MultipleLocator(1))
 
-
+		###### minute level
 		# #logs
 		# plt.figure(1,figsize=(20,10))
 		# plt.title('logs')
