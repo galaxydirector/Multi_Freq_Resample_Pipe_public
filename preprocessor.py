@@ -77,7 +77,7 @@ class Preprocessor(object):
 		'''
 		new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
 		tmp = configs["data"]["price_features"] + configs["data"]["other_features"]
-		features = sorted(tmp, key= lambda x : self.__sort_helper__(x))
+		features = sorted(tmp, key= lambda x : self.__price_sort_helper__(x))
 
 		# mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
 		#             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
