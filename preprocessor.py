@@ -52,7 +52,7 @@ class Preprocessor(object):
 			stock_data_df = stock_data_df.set_index('DATETIME')
 
 		if not include_otc:
-			stock_data_df = stock_data_df.between_time('9:30', "15:59")  
+			stock_data_df = stock_data_df.between_time('9:30', "16:00")  
 
 		new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
 		new_df['VOLUME'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
@@ -226,13 +226,17 @@ class Preprocessor(object):
 		df has dimension of (time_series_steps, num_features)
 
 		output: 
-		float[] a long series of the whole year transformation
+        float[][] original_price, a series tested period original price
+        float[][] log_price, a series tested period log transformed price
+        str[] date_time, a list of datetime
+        float prev_close, only record the -2 date close, to restore last day prediction
 		"""
 
-		output = []
-		logs = []
-		times = []
-		original_price = []
+		# output = []
+        original_price = []
+		log_price = []
+		date_time = []
+		
 		prev_close = -1
 
 		num_price_feature = len(configs["data"]["price_features"])
@@ -244,18 +248,18 @@ class Preprocessor(object):
 		for prev_day, one_day in zip(data_window, data_window[1:]):
 			prev_close = prev_day[-1][0]
 			for row in one_day:
-				temp = []
+				# temp = []
 				log_temp = []
 				original_temp = []
 				# row[0] is a hyper param, which price needs to be the first feature
 				# TODO: 
 				for i in range(num_price_feature):
-					temp.append(self.log_return(row[i],prev_close)) 
+					# temp.append(self.log_return(row[i],prev_close)) 
 					log_temp.append(self.log_return(row[i],prev_close))
 					original_temp.append(row[i])
 
 				# hardcoding, DATETIME of non price feature is datetime
-				times.append(row[-1])
+				date_time.append(row[-1])
 				
 				#### other features are not necessary?
 				# # deep copy rest of features into matrix
@@ -263,12 +267,12 @@ class Preprocessor(object):
 				#     temp.append(row[i])
 
 				# put every minute into the output
-				output.append(temp)
-				logs.append(log_temp)
-				original_price.append(original_temp)
+				# output.append(temp)
+                original_price.append(original_temp)
+				log_price.append(log_temp)
 			# output.extend([self.log_return(now, prev_close) for now in one_day])
 
-		return output,prev_close,logs,original_price,times
+		return original_price,log_price,date_time,prev_close
 
 
 	 # TODO: deprecated
@@ -282,7 +286,7 @@ class Preprocessor(object):
 			stock_data_df = stock_data_df.set_index('index')
 
 		if not include_otc:
-			stock_data_df = stock_data_df.between_time('9:30', "15:59")
+			stock_data_df = stock_data_df.between_time('9:30', "16:00")
 
 		stock_price = stock_data_df['PRICE'].resample('1T').mean().fillna(method='ffill')
 		trade_size = stock_data_df['SIZE'].resample('1T').sum().fillna(method='ffill')
