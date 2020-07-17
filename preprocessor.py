@@ -77,22 +77,22 @@ class Preprocessor(object):
 		'''
 		new_df = self.__minute_range_helper__(stock_data_df,time_range,include_otc=False)
 		tmp = configs["data"]["price_features"] + configs["data"]["other_features"]
-		features = sorted(tmp, key= lambda x : self.__price_sort_helper__(x))
+		features = sorted(tmp, key= lambda x : self.__sort_helper__(x))
 
+		# print(features)
 		# mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
 		#             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
-		mapping = {"PRICE":"PRICE","VOLUME":"SIZE","DATETIME":'DATETIME'}
-		res_df = new_df[[mapping[feature] for feature in features]]
-		#res_df = new_df[tmp]
+		# mapping = {"PRICE":"PRICE","VOLUME":"SIZE","DATETIME":'DATETIME'}
+		# res_df = new_df[[mapping[feature] for feature in features]]
+		res_df = new_df[features]
 		return res_df.values.reshape(-1, len(features)) #,new_df
 
-	def __price_sort_helper__(self, string):
+	def __sort_helper__(self, string):
 		"""
 		Design purpose for those feature is to make sure they are aligned
 
 		By principle, price is for minute level, average, close is for other levels
 		two may not happening at the same time
-
 		"""
 		if string == 'PRICE':
 			return 0
@@ -104,6 +104,10 @@ class Preprocessor(object):
 			return 3
 		elif string == 'HIGH':
 			return 4
+		elif string == 'DATETIME': # leave it as the last one
+			return 100
+		else:
+			return 50
 
 	def __day_range__(self,configs,stock_data_dfs,time_range,include_otc=False):
 		'''
