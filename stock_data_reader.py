@@ -146,7 +146,7 @@ class StockDataReader:
 
 				# making sure the input into the queue has only one dimension
 				# TODO: extend dimension to multiple: completed!
-				assert np.array(processed_data_window).shape[1]==len(self.configs["data"]["features"])
+				assert np.array(processed_data_window).shape[1]==len(configs["data"]["price_features"])+len(configs["data"]["other_features"])
 
 				# determine the length
 				# forecast_steps = self.configs["data"]["label_length"]
