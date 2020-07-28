@@ -22,7 +22,7 @@ class Preprocessor(object):
             stock_data_df = stock_data_df.set_index('index')
 
         if not include_otc:
-            stock_data_df = stock_data_df.between_time('9:30', "15:59")
+            stock_data_df = stock_data_df.between_time('9:30', "16:00")
 
         stock_price = stock_data_df['PRICE'].resample('1T').mean().fillna(method='ffill')
         trade_size = stock_data_df['SIZE'].resample('1T').sum().fillna(method='ffill')
