@@ -56,8 +56,9 @@ class Preprocessor(object):
 
 		price_features = set(configs["data"]["price_features"])
 
-		if 'PRICE' in price_features:
-			new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
+		# if 'PRICE' in price_features:
+		new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
+		
 		new_df['VOLUME'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
 		# TODO: more features: low, high, close, open
 
