@@ -14,6 +14,7 @@ import datetime
 from datetime import timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import plotly.graph_objects as go
 # import mplfinance as mpf
 # from mpl_finance import candlestick_ohlc
 # import finplot as fplt
@@ -404,7 +405,15 @@ class StockDataReaderForTest(StockDataReader):
 						hour,
 						minute,
 						second,
-						method, time_range):
+						method, 
+						time_range,
+						prediction,
+						y_min,
+						y_max,
+						date_line,
+						line_note,
+						date_dot,
+						dot_note):
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -440,71 +449,39 @@ class StockDataReaderForTest(StockDataReader):
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
 
-		times = [i.strftime('%b-%d %H:%M') for i in date_time]
+		times = [i.to_pydatetime()  for i in date_time]
+		date_time = times
+		stock_data_df = pd.DataFrame.from_records(original_price,columns=['open','high','low','close'])
+		stock_data_df.insert(0,'timestamp',date_time,True)
 
-		def plot_one_minute():
-			# minute level
-			fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
-			fig.autofmt_xdate()
+		fig = go.Figure(data=[go.Candlestick(
+								x=stock_data_df['timestamp'],
+								open=stock_data_df['open'],
+								high=stock_data_df['high'],
+								low=stock_data_df['low'],
+								close=stock_data_df['close'])])
 
-			# plot_comparison_point_x = (date_time[-1]-timedelta(minutes=60)).strftime('%b-%d %H:%M')
-			prediction_price = 80
-			prediction_log = 0.005
+		fig.update_yaxes(range=[y_min, y_max])
 
-			#logs
-			ax1.set_title('log return')
-			ax1.plot(times,log_price,'bo')
-			ax1.plot(times[-1], log_price[-1],'ro',markersize=14)
-			ax1.plot(times[-1], prediction_log,'r*',markersize=14)
-			ax1.xaxis.grid(True, which='major')
-			ax1.xaxis.set_major_locator(plt.MaxNLocator(9))
+		fig.update_layout(
+				title=f'{symbol} Stock Chart',
+            
+				yaxis_title=f'{symbol} Stock',
+				shapes = [dict(
+						x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', fillcolor='blueviolet',
+						line_width=0.5),
+						dict(
+						x0=date_dot, x1=date_dot, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',line_width=10)],
+            
+						annotations=[dict(
+						x=date_line, y=0.05, xref='x', yref='paper',
+						showarrow=False, xanchor='left', text=line_note),
+						dict(
+						x=date_line, y=(prediction-y_min-0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+						showarrow=False, xanchor='left', text=dot_note)]
+		)
 
-			#price
-			ax2.set_title('price')
-			ax2.plot(times[:-1], original_price[:-1],'bo')
-			ax2.plot(times[-1], original_price[-1],'ro',markersize=14)
-			ax2.plot(times[-1], prediction_price,'r*',markersize=14)
-			ax2.xaxis.grid(True, which='major')
-			ax2.xaxis.set_major_locator(plt.MaxNLocator(5))
-			# ax2.xaxis.set_minor_locator(mdates.HourLocator())
-
-		def plot_5_minute():
-			pass
-
-		def plot_30_minute():
-			pass 
-
-		def plot_60_minute():
-			pass
-
-		def plot_4_hours():
-			pass
-
-		def plot_one_day():
-			pass
-
-		if method=="minute":
-			if time_range==1:
-				
-				plot_one_minute()
-			elif time_range==5:
-				plot_5_minute()
-
-			elif time_range==30:
-				plot_30_minute()
-
-			elif time_range==60:
-				plot_60_minute()
-
-			elif time_range==240:
-				plot_4_hours()
-
-
-
-
-		elif method=="day":
-			pass
-
+		fig.show()
 
 		# res = res_df[0]
 		# for i in range(1,len(res_df)):
