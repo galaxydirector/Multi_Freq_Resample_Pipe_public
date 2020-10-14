@@ -143,7 +143,7 @@ class Preprocessor(object):
 		
 		# features = configs["data"]["features"]
 		price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__sort_helper__(x))
-		feature = price_features+configs["data"]["other_features"]
+		features = price_features+configs["data"]["other_features"]
 		# mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
 		#             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
 		# return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
