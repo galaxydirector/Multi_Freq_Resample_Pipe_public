@@ -410,10 +410,21 @@ class StockDataReaderForTest(StockDataReader):
 						prediction,
 						y_min,
 						y_max,
-						date_line,
 						line_note,
-						date_dot,
 						dot_note):
+		# symbo: stock symbol, string
+		# year: year, int
+		# month: month, int
+		# hour: hour, int, cannot be 0
+		# minute: minute, int, cannot be 0
+		# second: second, int, cannot be 0
+		# method: minute or day, string
+		# time_range: int, how many minutes/days
+		# prediction: predicted price
+		# y_min: lower bound of the chart
+		# y_max: upper bound of the chart
+		# line_note: anotation of the line you want to see, for example: "Open price"
+		# dot_note: anotation of the priction you want to emphasis, for example: "Predicted price"
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -449,9 +460,22 @@ class StockDataReaderForTest(StockDataReader):
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
 
-		times = [i.to_pydatetime()  for i in date_time]
+		date_line=datetime.datetime(year,month,day,hour,minute,second)
+		times=[]
+		if method == 'minute':
+			if date_line > date_time[-1]:
+				date_line = date_time[-1].strftime('%b-%d %H:%M')
+			else:
+				date_line = date_line.strftime('%b-%d %H:%M')
+			times = [i.strftime('%b-%d %H:%M') for i in date_time]
+		elif method == 'day':
+			if date_line > date_time[-1]:
+				date_line = date_time[-1].strftime('%b-%d')
+			else:
+				date_line = date_line.strftime('%b-%d')
+			times = [i.strftime('%b-%d') for i in date_time]
 		date_time = times
-		stock_data_df = pd.DataFrame.from_records(original_price,columns=['open','high','low','close'])
+		stock_data_df = pd.DataFrame.from_records(original_price,columns=['close','open','low','high'])
 		stock_data_df.insert(0,'timestamp',date_time,True)
 
 		fig = go.Figure(data=[go.Candlestick(
@@ -467,18 +491,18 @@ class StockDataReaderForTest(StockDataReader):
 				title=f'{symbol} Stock Chart',
             
 				yaxis_title=f'{symbol} Stock',
-				shapes = [dict(
-						x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', fillcolor='blueviolet',
-						line_width=0.5),
+				 shapes = [dict(
+					x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', fillcolor='blueviolet',
+					line_width=0.5),
 						dict(
-						x0=date_dot, x1=date_dot, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',line_width=10)],
-            
-						annotations=[dict(
-						x=date_line, y=0.05, xref='x', yref='paper',
-						showarrow=False, xanchor='left', text=line_note),
-						dict(
-						x=date_line, y=(prediction-y_min-0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-						showarrow=False, xanchor='left', text=dot_note)]
+					x0=date_line, x1=date_line, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+					line_width=10)],
+					annotations=[dict(
+					x=date_line, y=0.05, xref='x', yref='paper',
+					showarrow=False, xanchor='left', text=line_note),
+							dict(
+					x=date_line, y=(prediction-y_min-0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+					showarrow=False, xanchor='left', text=dot_note)]
 		)
 
 		fig.show()
