@@ -276,9 +276,9 @@ class Preprocessor(object):
 					original_temp.append(row[i])
 
 				#### other features are not necessary?
-				# # deep copy rest of features into matrix
-				# for i in range(num_price_feature,len(row)):
-				#     temp.append(row[i])
+				# deep copy rest of features into matrix
+				for i in range(num_price_feature,len(row)):
+				    temp.append(row[i])
 
 				# put every minute into the output
 				# output.append(temp)
