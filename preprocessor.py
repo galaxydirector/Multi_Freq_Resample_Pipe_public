@@ -127,7 +127,7 @@ class Preprocessor(object):
 		if time_range == 1:
 			# TODO: magic number?
 			# solve in straight forward way
-			new_df = self.__minute_range_helper__(stock_data_dfs[0],24*60,include_otc=False)
+			new_df = self.__minute_range_helper__(configs,stock_data_dfs[0],24*60,include_otc=False)
 
 		else:
 			tmp_dfs = stock_data_dfs
@@ -138,7 +138,7 @@ class Preprocessor(object):
 
 			# TODO: magic number?
 			# make sure of the right way to group by
-			new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
+			new_df = self.__minute_range_helper__(configs,tmp_df,24*60*365,include_otc=False)
 
 		
 		# features = configs["data"]["features"]
