@@ -408,23 +408,17 @@ class StockDataReaderForTest(StockDataReader):
 						method, 
 						time_range,
 						prediction,
-						y_min,
-						y_max,
-						line_note,
-						dot_note):
+						line_note):
 		# symbo: stock symbol, string
 		# year: year, int
 		# month: month, int
-		# hour: hour, int, cannot be 0
-		# minute: minute, int, cannot be 0
-		# second: second, int, cannot be 0
+		# hour: hour, int
+		# minute: minute, int
+		# second: second, int
 		# method: minute or day, string
 		# time_range: int, how many minutes/days
 		# prediction: predicted price
-		# y_min: lower bound of the chart
-		# y_max: upper bound of the chart
 		# line_note: anotation of the line you want to see, for example: "Open price"
-		# dot_note: anotation of the priction you want to emphasis, for example: "Predicted price"
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -460,53 +454,76 @@ class StockDataReaderForTest(StockDataReader):
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
 
-		date_line=datetime.datetime(year,month,day,hour,minute,second)
+		actual_price=original_price[-1][2]
+		original_price[-1]=[0,0,0,0,0]
+		actual_price_note="Actual price: "+str(actual_price)
+		original_price[:5]
+
 		times=[]
 		if method == 'minute':
-			if date_line > date_time[-1]:
-				date_line = date_time[-1].strftime('%b-%d %H:%M')
-			else:
-				date_line = date_line.strftime('%b-%d %H:%M')
-			times = [i.strftime('%b-%d %H:%M') for i in date_time]
+			date_time = [i.strftime('%b-%d %H:%M') for i in date_time]
 		elif method == 'day':
-			if date_line > date_time[-1]:
-				date_line = date_time[-1].strftime('%b-%d')
-			else:
-				date_line = date_line.strftime('%b-%d')
-			times = [i.strftime('%b-%d') for i in date_time]
-		date_time = times
-		stock_data_df = pd.DataFrame.from_records(original_price,columns=['close','open','low','high'])
+			date_time = [i.strftime('%b-%d') for i in date_time]
+		times=[date_time[0]]
+		if method == 'minute':
+			for i in range(1,len(date_time)):
+				if date_time[i][:6]==date_time[i-1][:6]:
+					to_add=date_time[i][7:]
+					while to_add in times:
+						to_add+=" "
+					times.append(to_add)
+				else:
+					times.append(date_time[i])
+			date_time=times
+		date_line=date_time[-1]
+		dot_note = 'Predict Price: '+str(prediction)
+		date_time[:10]
+
+		stock_data_df = pd.DataFrame.from_records(original_price,columns=['close','open','low','high','volume'])
 		stock_data_df.insert(0,'timestamp',date_time,True)
+		y_max=max(stock_data_df['high'])*1.01
+		y_min=min(min(stock_data_df['low'][:-1]),actual_price)*.99
+
+		stock_data_df.head(5)
 
 		fig = go.Figure(data=[go.Candlestick(
-								x=stock_data_df['timestamp'],
-								open=stock_data_df['open'],
-								high=stock_data_df['high'],
-								low=stock_data_df['low'],
-								close=stock_data_df['close'])])
+					x=stock_data_df['timestamp'],
+					open=stock_data_df['open'],
+					high=stock_data_df['high'],
+					low=stock_data_df['low'],
+					close=stock_data_df['close'])])
 
 		fig.update_yaxes(range=[y_min, y_max])
 
 		fig.update_layout(
-				title=f'{symbol} Stock Chart',
-            
-				yaxis_title=f'{symbol} Stock',
-				 shapes = [dict(
-					x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', fillcolor='blueviolet',
-					line_width=0.5),
+			title=f'{symbol} Stock Chart',
+
+			yaxis_title=f'{symbol} Stock',
+			shapes = [dict(
+				x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', line_width=0.5),
+					
+					dict(
+				x0=date_line, x1=date_line, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+				line_width=10),
+					
+					dict(
+				x0=date_line, x1=date_line, y0=(actual_price-y_min)/(y_max-y_min), y1=(actual_price-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+				line_width=10)],
+			
+			annotations=[dict(
+				x=date_line, y=0.05, xref='x', yref='paper',
+				showarrow=False, xanchor='left', text=line_note),
+						
 						dict(
-					x0=date_line, x1=date_line, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-					line_width=10)],
-					annotations=[dict(
-					x=date_line, y=0.05, xref='x', yref='paper',
-					showarrow=False, xanchor='left', text=line_note),
-							dict(
-					x=date_line, y=(prediction-y_min-0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-					showarrow=False, xanchor='left', text=dot_note)]
+				x=date_line, y=(prediction-y_min-0.05*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+				showarrow=False, xanchor='left', text=dot_note),
+						
+						dict(
+				x=date_line, y=(actual_price-y_min-0.1*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
+				showarrow=False, xanchor='left', text=actual_price_note)]
 		)
 
 		fig.show()
-
 		# res = res_df[0]
 		# for i in range(1,len(res_df)):
 		# 	res = pd.concat([res,res_df[i]])
