@@ -281,7 +281,7 @@ class Preprocessor(object):
 				# for i in range(num_price_feature,len(row)):
 				#     temp.append(row[i])
 
-				temp.append(row[0])
+				original_temp.append(row[num_price_feature])
 
 				# put every minute into the output
 				# output.append(temp)
