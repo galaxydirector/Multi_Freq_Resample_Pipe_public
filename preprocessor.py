@@ -258,6 +258,7 @@ class Preprocessor(object):
 
 		num_price_feature = len(configs["data"]["price_features"])
 
+		assert 'VOLUME' in configs["data"]["other_features"][0], "VALUME feature must be the first in other_features"
 		assert 'DATETIME' in configs["data"]["other_features"], "DATETIME feature must be in other_features"
 		assert 'DATETIME' == configs["data"]["other_features"][-1], "DATETIME feature must be the last in other_features"
 
@@ -276,9 +277,11 @@ class Preprocessor(object):
 					original_temp.append(row[i])
 
 				#### other features are not necessary?
-				# deep copy rest of features into matrix
-				for i in range(num_price_feature,len(row)):
-				    temp.append(row[i])
+				# # deep copy rest of features into matrix
+				# for i in range(num_price_feature,len(row)):
+				#     temp.append(row[i])
+
+				temp.append(row[0])
 
 				# put every minute into the output
 				# output.append(temp)
