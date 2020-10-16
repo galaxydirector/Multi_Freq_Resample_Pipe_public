@@ -15,6 +15,7 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 # import mplfinance as mpf
 # from mpl_finance import candlestick_ohlc
 # import finplot as fplt
@@ -407,8 +408,7 @@ class StockDataReaderForTest(StockDataReader):
 						second,
 						method, 
 						time_range,
-						prediction,
-						line_note):
+						prediction):
 		# symbo: stock symbol, string
 		# year: year, int
 		# month: month, int
@@ -418,7 +418,6 @@ class StockDataReaderForTest(StockDataReader):
 		# method: minute or day, string
 		# time_range: int, how many minutes/days
 		# prediction: predicted price
-		# line_note: anotation of the line you want to see, for example: "Open price"
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -457,7 +456,6 @@ class StockDataReaderForTest(StockDataReader):
 		actual_price=original_price[-1][2]
 		original_price[-1]=[0,0,0,0,0]
 		actual_price_note="Actual price: "+str(actual_price)
-		original_price[:5]
 
 		times=[]
 		if method == 'minute':
@@ -476,52 +474,71 @@ class StockDataReaderForTest(StockDataReader):
 					times.append(date_time[i])
 			date_time=times
 		date_line=date_time[-1]
-		dot_note = 'Predict Price: '+str(prediction)
-		date_time[:10]
 
 		stock_data_df = pd.DataFrame.from_records(original_price,columns=['close','open','low','high','volume'])
 		stock_data_df.insert(0,'timestamp',date_time,True)
 		y_max=max(stock_data_df['high'])*1.01
 		y_min=min(min(stock_data_df['low'][:-1]),actual_price)*.99
+		volume_max=max(stock_data_df['volume'])*1.1
 
-		stock_data_df.head(5)
+		fig = make_subplots(
+			rows=2, cols=1,
+			vertical_spacing=0.3,
+			shared_xaxes=True, 
+			row_heights=[0.8, 0.2],
+			specs=[[{"type": "candlestick"}],
+				[{"type": "bar"}]])
+				
+		fig.add_trace(go.Candlestick(
+							name="Price",
+							x=stock_data_df['timestamp'],
+							open=stock_data_df['open'],
+							high=stock_data_df['high'],
+							low=stock_data_df['low'],
+							close=stock_data_df['close']),row=1,col=1)
 
-		fig = go.Figure(data=[go.Candlestick(
-					x=stock_data_df['timestamp'],
-					open=stock_data_df['open'],
-					high=stock_data_df['high'],
-					low=stock_data_df['low'],
-					close=stock_data_df['close'])])
+		fig.update_yaxes(range=[y_min, y_max],row=1,col=1)
 
-		fig.update_yaxes(range=[y_min, y_max])
+		fig.add_trace(go.Scatter(
+							name="Prediction",
+							x=[date_line],
+							y=[prediction],
+							mode='markers+text',
+							marker=dict(size=[10],
+							color=['black']),
+							text=("Prediction"),
+							textposition="bottom center"),
+							row=1,col=1)
+
+		fig.add_trace(go.Scatter(
+							name="Actual",
+							x=[date_line],
+							y=[actual_price],
+							mode='markers+text',
+							marker=dict(size=[10],
+							color=['blue']),
+							text=('Actual'),
+							textposition="bottom center"),
+							row=1,col=1)
 
 		fig.update_layout(
-			title=f'{symbol} Stock Chart',
-
+			title={
+				'text': f'{symbol} Candlestick Chart',
+				'y':0.9,
+				'x':0.5,
+				'xanchor': 'center',
+				'yanchor': 'top'},
 			yaxis_title=f'{symbol} Stock',
-			shapes = [dict(
-				x0=date_line, x1=date_line, y0=0, y1=1, xref='x', yref='paper', line_width=0.5),
-					
-					dict(
-				x0=date_line, x1=date_line, y0=(prediction-y_min)/(y_max-y_min), y1=(prediction-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-				line_width=10),
-					
-					dict(
-				x0=date_line, x1=date_line, y0=(actual_price-y_min)/(y_max-y_min), y1=(actual_price-y_min+0.03*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-				line_width=10)],
-			
-			annotations=[dict(
-				x=date_line, y=0.05, xref='x', yref='paper',
-				showarrow=False, xanchor='left', text=line_note),
-						
-						dict(
-				x=date_line, y=(prediction-y_min-0.05*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-				showarrow=False, xanchor='left', text=dot_note),
-						
-						dict(
-				x=date_line, y=(actual_price-y_min-0.1*(y_max-y_min))/(y_max-y_min), xref='x', yref='paper',
-				showarrow=False, xanchor='left', text=actual_price_note)]
+			xaxis=dict(showticklabels=False)
 		)
+
+		fig.add_trace(go.Bar(name="Volume",x=stock_data_df['timestamp'], y=stock_data_df['volume'],marker={'color': 'grey'}),row=2,col=1)
+		fig.update_yaxes(range=[0, volume_max],row=2,col=1)
+		fig.update_layout(height=600, width=800 )
+		fig.update_layout(
+			yaxis2_title="Volume",
+		)
+
 
 		fig.show()
 		# res = res_df[0]
