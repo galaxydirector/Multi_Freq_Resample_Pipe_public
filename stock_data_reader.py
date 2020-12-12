@@ -14,6 +14,8 @@ import datetime
 from datetime import timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 # import mplfinance as mpf
 # from mpl_finance import candlestick_ohlc
 # import finplot as fplt
@@ -404,7 +406,18 @@ class StockDataReaderForTest(StockDataReader):
 						hour,
 						minute,
 						second,
-						method, time_range):
+						method, 
+						time_range,
+						prediction):
+		# symbo: stock symbol, string
+		# year: year, int
+		# month: month, int
+		# hour: hour, int
+		# minute: minute, int
+		# second: second, int
+		# method: minute or day, string
+		# time_range: int, how many minutes/days
+		# prediction: predicted price
 		# TODO: generalize this?
 		# TODO: rm all hard coding
 		db_manager = DBManager("./Database/" + str(year) + "/" + symbol + "/",recursion_level=0)
@@ -440,72 +453,94 @@ class StockDataReaderForTest(StockDataReader):
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
 		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
 
-		times = [i.strftime('%b-%d %H:%M') for i in date_time]
+		actual_price=original_price[-1][2]
+		original_price[-1]=[0,0,0,0,0]
+		actual_price_note="Actual price: "+str(actual_price)
 
-		def plot_one_minute():
-			# minute level
-			fig, (ax1,ax2) = plt.subplots(2,1,figsize=(20,20))
-			fig.autofmt_xdate()
+		times=[]
+		if method == 'minute':
+			date_time = [i.strftime('%b-%d %H:%M') for i in date_time]
+		elif method == 'day':
+			date_time = [i.strftime('%b-%d') for i in date_time]
+		times=[date_time[0]]
+		if method == 'minute':
+			for i in range(1,len(date_time)):
+				if date_time[i][:6]==date_time[i-1][:6]:
+					to_add=date_time[i][7:]
+					while to_add in times:
+						to_add+=" "
+					times.append(to_add)
+				else:
+					times.append(date_time[i])
+			date_time=times
+		date_line=date_time[-1]
 
-			# plot_comparison_point_x = (date_time[-1]-timedelta(minutes=60)).strftime('%b-%d %H:%M')
-			prediction_price = 80
-			prediction_log = 0.005
+		stock_data_df = pd.DataFrame.from_records(original_price,columns=['close','open','low','high','volume'])
+		stock_data_df.insert(0,'timestamp',date_time,True)
+		y_max=max(stock_data_df['high'])*1.01
+		y_min=min(min(stock_data_df['low'][:-1]),actual_price)*.99
+		volume_max=max(stock_data_df['volume'])*1.1
 
-			#logs
-			ax1.set_title('log return')
-			ax1.plot(times,log_price,'bo')
-			ax1.plot(times[-1], log_price[-1],'ro',markersize=14)
-			ax1.plot(times[-1], prediction_log,'r*',markersize=14)
-			ax1.xaxis.grid(True, which='major')
-			ax1.xaxis.set_major_locator(plt.MaxNLocator(9))
-
-			#price
-			ax2.set_title('price')
-			ax2.plot(times[:-1], original_price[:-1],'bo')
-			ax2.plot(times[-1], original_price[-1],'ro',markersize=14)
-			ax2.plot(times[-1], prediction_price,'r*',markersize=14)
-			ax2.xaxis.grid(True, which='major')
-			ax2.xaxis.set_major_locator(plt.MaxNLocator(5))
-			# ax2.xaxis.set_minor_locator(mdates.HourLocator())
-
-		def plot_5_minute():
-			pass
-
-		def plot_30_minute():
-			pass 
-
-		def plot_60_minute():
-			pass
-
-		def plot_4_hours():
-			pass
-
-		def plot_one_day():
-			pass
-
-		if method=="minute":
-			if time_range==1:
+		fig = make_subplots(
+			rows=2, cols=1,
+			vertical_spacing=0.3,
+			shared_xaxes=True, 
+			row_heights=[0.8, 0.2],
+			specs=[[{"type": "candlestick"}],
+				[{"type": "bar"}]])
 				
-				plot_one_minute()
-			elif time_range==5:
-				plot_5_minute()
+		fig.add_trace(go.Candlestick(
+							name="Price",
+							x=stock_data_df['timestamp'],
+							open=stock_data_df['open'],
+							high=stock_data_df['high'],
+							low=stock_data_df['low'],
+							close=stock_data_df['close']),row=1,col=1)
 
-			elif time_range==30:
-				plot_30_minute()
+		fig.update_yaxes(range=[y_min, y_max],row=1,col=1)
 
-			elif time_range==60:
-				plot_60_minute()
+		fig.add_trace(go.Scatter(
+							name="Prediction",
+							x=[date_line],
+							y=[prediction],
+							mode='markers+text',
+							marker=dict(size=[10],
+							color=['black']),
+							text=("Prediction"),
+							textposition="bottom center"),
+							row=1,col=1)
 
-			elif time_range==240:
-				plot_4_hours()
+		fig.add_trace(go.Scatter(
+							name="Actual",
+							x=[date_line],
+							y=[actual_price],
+							mode='markers+text',
+							marker=dict(size=[10],
+							color=['blue']),
+							text=('Actual'),
+							textposition="bottom center"),
+							row=1,col=1)
+
+		fig.update_layout(
+			title={
+				'text': f'{symbol} Candlestick Chart',
+				'y':0.9,
+				'x':0.5,
+				'xanchor': 'center',
+				'yanchor': 'top'},
+			yaxis_title=f'{symbol} Stock',
+			xaxis=dict(showticklabels=False)
+		)
+
+		fig.add_trace(go.Bar(name="Volume",x=stock_data_df['timestamp'], y=stock_data_df['volume'],marker={'color': 'grey'}),row=2,col=1)
+		fig.update_yaxes(range=[0, volume_max],row=2,col=1)
+		fig.update_layout(height=600, width=800 )
+		fig.update_layout(
+			yaxis2_title="Volume",
+		)
 
 
-
-
-		elif method=="day":
-			pass
-
-
+		fig.show()
 		# res = res_df[0]
 		# for i in range(1,len(res_df)):
 		# 	res = pd.concat([res,res_df[i]])

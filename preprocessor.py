@@ -56,8 +56,9 @@ class Preprocessor(object):
 
 		price_features = set(configs["data"]["price_features"])
 
-		if 'PRICE' in price_features:
-			new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
+		# if 'PRICE' in price_features:
+		new_df = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).mean().fillna(method='ffill')[['PRICE']]
+		
 		new_df['VOLUME'] = stock_data_df.groupby(pd.Grouper(level='DATETIME',freq= str(time_range) + 'min')).sum().fillna(method='ffill')['SIZE']
 		# TODO: more features: low, high, close, open
 
@@ -126,7 +127,7 @@ class Preprocessor(object):
 		if time_range == 1:
 			# TODO: magic number?
 			# solve in straight forward way
-			new_df = self.__minute_range_helper__(stock_data_dfs[0],24*60,include_otc=False)
+			new_df = self.__minute_range_helper__(configs,stock_data_dfs[0],24*60,include_otc=False)
 
 		else:
 			tmp_dfs = stock_data_dfs
@@ -137,12 +138,12 @@ class Preprocessor(object):
 
 			# TODO: magic number?
 			# make sure of the right way to group by
-			new_df = self.__minute_range_helper__(tmp_df,24*60*365,include_otc=False)
+			new_df = self.__minute_range_helper__(configs,tmp_df,24*60*365,include_otc=False)
 
 		
 		# features = configs["data"]["features"]
-		price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__price_sort_helper__(x))
-		feature = price_features+configs["data"]["other_features"]
+		price_features = sorted(configs["data"]["price_features"], key= lambda x : self.__sort_helper__(x))
+		features = price_features+configs["data"]["other_features"]
 		# mapping = {"price":"PRICE", "volume":"SIZE",'datetime':'DATETIME',\
 		#             'low':'LOW','high':'HIGH','open':'OPEN','close':'CLOSE'}
 		# return new_df[[mapping[feature] for feature in features]].values.reshape(-1, len(features))
@@ -257,6 +258,7 @@ class Preprocessor(object):
 
 		num_price_feature = len(configs["data"]["price_features"])
 
+		assert 'VOLUME' == configs["data"]["other_features"][0], "VALUME feature must be the first in other_features"
 		assert 'DATETIME' in configs["data"]["other_features"], "DATETIME feature must be in other_features"
 		assert 'DATETIME' == configs["data"]["other_features"][-1], "DATETIME feature must be the last in other_features"
 
@@ -278,6 +280,8 @@ class Preprocessor(object):
 				# # deep copy rest of features into matrix
 				# for i in range(num_price_feature,len(row)):
 				#     temp.append(row[i])
+
+				original_temp.append(row[num_price_feature])
 
 				# put every minute into the output
 				# output.append(temp)
