@@ -349,7 +349,7 @@ class StockDataReaderForTest(StockDataReader):
 		# print('checkpoint3')
 		return res,date
 	
-	def search_feature_length_period(self,year,month,day,hour,minute,second,date_list):
+	def search_feature_length_period(self,year,month,day,hour,minute,second,date_list,total_len,day_flag):
 		'''
 		input:
 			year : int , the year of a certrain time
@@ -373,31 +373,33 @@ class StockDataReaderForTest(StockDataReader):
 		index = self.__search_specific_date__(date_list,date)
 		
 		date_list[index] = self.preprocessor.__datetime_format_process__(date_list[index])  
-		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
+		# total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
 		i = index
-
 		time = str(year)+'-'+str(month)+'-'+str(day)+' '+ str(hour) + ':'+ str(minute)+ ':'+ str(second)
 		date = datetime.datetime.strptime(time,"%Y-%m-%d %H:%M:%S")
-
-		while i >= 0:
-			day = date_list[i]
-			if i == index:      
-				tmp = day[day['DATETIME'] <= date]
-				total_len -= len(tmp)
-			else:
-				total_len -= len(date_list[i])
-			if total_len <=0:
-				break
-				
-			i = i - 1
-		#print('checkpoint2')
-		if total_len > 0:
-			return [],date
 		
-		res = date_list[i:index+1]
-		res[-1] = tmp
+		if day_flag == False:
+			while i >= 0:
+				day = date_list[i]
+				if i == index:      
+					tmp = day[day['DATETIME'] <= date]
+					total_len -= len(tmp)
+				else:
+					total_len -= len(date_list[i])
+				if total_len <=0:
+					break
+					
+				i = i - 1
+			if total_len > 0:
+				return [],date
+			
+			res = date_list[i:index+1]
+			res[-1] = tmp
 
-		return res,date         
+			return res,date   
+		else:
+			#print(date_list[ max(0,index-total_len):(index+1)])
+			return date_list[ max(0,index-total_len):(index+1)],date
 
 	def plt_plot(self,symbol,
 						year,
@@ -439,20 +441,30 @@ class StockDataReaderForTest(StockDataReader):
 		#                                           month,
 		#                                           day,hour,minute,second,
 		#                                           window,data)
-
+		
+		total_len = (self.configs["data"]["label_length"] + self.configs["data"]["feature_length"]) * 60
+		if method == 'minute':
+			day_flag = False
+		elif method == 'day':
+			total_len = 30
+			day_flag = True
+		else:
+			raise InterruptedError(method + " is not a valid method")
 		res,input_date = self.search_feature_length_period(year,month,
 														day,hour,
 														minute,second,
-														data)
+														data,total_len,day_flag)
 
 		# temp = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 		# resampled_data_matrix = [tmp[0] for tmp in temp]
-
+		if method == 'day' and time_range >= 5:
+			time_range = 5
 		resampled_data_matrix = self.preprocessor.groupby_time(self.configs,res,time_range,method)
 		# res_df = [tmp[1] for tmp in temp]
 		# _,prev_close,logs,ori_prices,timestamps = self.preprocessor.batch_log_transform_for_test(resampled_data_matrix)
+		#print(resampled_data_matrix)
 		original_price,log_price,date_time,prev_close = self.preprocessor.batch_log_transform_for_test(self.configs, resampled_data_matrix)
-
+		#print(original_price)
 		actual_price=original_price[-1][2]
 		original_price[-1]=[0,0,0,0,0]
 		actual_price_note="Actual price: "+str(actual_price)
